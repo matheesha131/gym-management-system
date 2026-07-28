@@ -25,7 +25,8 @@ export default function LoginPage() {
       if (res.error) {
         setError(res.error.message || "Invalid credentials");
       } else {
-        router.push("/admin/plans");
+        // Force full page reload or push to root so proxy middleware evaluates auth redirect
+        window.location.href = "/";
       }
     } catch (err: any) {
       setError(err.message || "Failed to sign in");
@@ -34,21 +35,56 @@ export default function LoginPage() {
     }
   };
 
+  const quickFill = (demoEmail: string, demoPass: string) => {
+    setEmail(demoEmail);
+    setPassword(demoPass);
+  };
+
   return (
-    <div className="min-h-screen bg-[#090A0F] text-[#F3F4F6] flex items-center justify-center p-4">
-      <div className="bg-[#12141C] border border-[#222634] w-full max-w-md rounded-xl p-8 shadow-2xl">
-        <h1 className="text-2xl font-bold text-[#10B981] mb-2">Gym Management System</h1>
+    <div className="min-h-screen bg-[#090A0F] text-[#F3F4F6] flex items-center justify-center p-4 font-sans">
+      <div className="bg-[#12141C] border border-[#222634] w-full max-w-md rounded-2xl p-8 shadow-2xl">
+        <h1 className="text-2xl font-black text-[#10B981] mb-1">Gym Management System</h1>
         <p className="text-sm text-[#9CA3AF] mb-6">Sign in to your account</p>
 
         {error && (
-          <div className="bg-[#EF4444]/10 border border-[#EF4444] text-[#EF4444] text-sm p-3 rounded-lg mb-4">
+          <div className="bg-[#EF4444]/15 border border-[#EF4444] text-[#F87171] text-xs p-3.5 rounded-xl mb-4">
             {error}
           </div>
         )}
 
+        {/* Demo Quick Fill Buttons */}
+        <div className="mb-6 bg-[#090A0F] border border-[#222634] rounded-xl p-3">
+          <span className="text-[11px] font-bold text-[#9CA3AF] uppercase block mb-2">
+            ⚡ Demo Credentials Quick Fill
+          </span>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => quickFill("admin@gym.com", "Password123!")}
+              className="bg-[#222634] hover:bg-[#2D3346] text-[#10B981] text-xs font-semibold py-1.5 px-2 rounded-lg transition-colors border border-[#10B981]/30"
+            >
+              Admin
+            </button>
+            <button
+              type="button"
+              onClick={() => quickFill("staff@gym.com", "Password123!")}
+              className="bg-[#222634] hover:bg-[#2D3346] text-[#3B82F6] text-xs font-semibold py-1.5 px-2 rounded-lg transition-colors border border-[#3B82F6]/30"
+            >
+              Staff
+            </button>
+            <button
+              type="button"
+              onClick={() => quickFill("member@gym.com", "Password123!")}
+              className="bg-[#222634] hover:bg-[#2D3346] text-[#F59E0B] text-xs font-semibold py-1.5 px-2 rounded-lg transition-colors border border-[#F59E0B]/30"
+            >
+              Member
+            </button>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
+            <label className="block text-xs font-semibold text-[#9CA3AF] mb-1 uppercase">
               Email Address
             </label>
             <input
@@ -56,13 +92,13 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="user@example.com"
-              className="w-full bg-[#090A0F] border border-[#222634] rounded-lg p-2.5 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981]"
+              className="w-full bg-[#090A0F] border border-[#222634] focus:border-[#10B981] rounded-xl p-3 text-[#F3F4F6] text-sm outline-none"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
+            <label className="block text-xs font-semibold text-[#9CA3AF] mb-1 uppercase">
               Password
             </label>
             <input
@@ -70,7 +106,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full bg-[#090A0F] border border-[#222634] rounded-lg p-2.5 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981]"
+              className="w-full bg-[#090A0F] border border-[#222634] focus:border-[#10B981] rounded-xl p-3 text-[#F3F4F6] text-sm outline-none"
               required
             />
           </div>
@@ -78,7 +114,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#10B981] hover:bg-[#059669] text-white py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 mt-2"
+            className="w-full bg-[#10B981] hover:bg-[#059669] text-white py-3 rounded-xl text-sm font-extrabold transition-all shadow-lg disabled:opacity-50 mt-2"
           >
             {loading ? "Signing in..." : "Sign In"}
           </button>
@@ -86,7 +122,7 @@ export default function LoginPage() {
 
         <p className="text-xs text-center text-[#9CA3AF] mt-6">
           Don't have an account?{" "}
-          <a href="/register" className="text-[#10B981] hover:underline font-medium">
+          <a href="/register" className="text-[#10B981] hover:underline font-bold">
             Register
           </a>
         </p>
