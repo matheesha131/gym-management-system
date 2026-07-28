@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { signUp } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 
@@ -37,48 +38,63 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#090A0F] text-[#F3F4F6] flex items-center justify-center p-4">
-      <div className="bg-[#12141C] border border-[#222634] w-full max-w-md rounded-xl p-8 shadow-2xl">
-        <h1 className="text-2xl font-bold text-[#10B981] mb-2">Gym Management System</h1>
-        <p className="text-sm text-[#9CA3AF] mb-6">Create a new account</p>
+    <div className="min-h-screen bg-[#08090C] text-[#F8FAFC] flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Ambient background glows */}
+      <div className="absolute -top-32 -right-32 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div className="glass-panel w-full max-w-md rounded-3xl p-8 shadow-2xl relative z-10 border border-white/10">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-black flex items-center justify-center font-black shadow-lg">
+            <svg className="w-5 h-5 text-black fill-current" viewBox="0 0 24 24">
+              <path d="M20.57 14.86L22 13.43L20.57 12L17 15.57L8.43 7L12 3.43L10.57 2L9.14 3.43L7.71 2L6.29 3.43L4.86 2L3.43 3.43L2 2L3.43 3.43L2 4.86L3.43 6.29L2 7.71L3.43 9.14L2 10.57L3.43 12L7 8.43L15.57 17L12 20.57L13.43 22L14.86 20.57L16.29 22L17.71 20.57L19.14 22L20.57 20.57L22 22L20.57 20.57L22 19.14L20.57 17.71L22 16.29L20.57 14.86Z" />
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-xl font-black text-white tracking-tight">Create Account</h1>
+            <p className="text-xs text-slate-400 font-medium">Join FitPulse member network</p>
+          </div>
+        </div>
 
         {error && (
-          <div className="bg-[#EF4444]/10 border border-[#EF4444] text-[#EF4444] text-sm p-3 rounded-lg mb-4">
-            {error}
+          <div className="bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs p-4 rounded-2xl mb-6 flex items-start gap-2">
+            <svg className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{error}</span>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
+            <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
               Full Name
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="John Doe"
-              className="w-full bg-[#090A0F] border border-[#222634] rounded-lg p-2.5 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981]"
+              placeholder="Alexander Wright"
+              className="w-full bg-[#0B0D14] border border-white/10 focus:border-emerald-500 rounded-xl p-3.5 text-slate-100 text-sm outline-none transition-all focus:ring-2 focus:ring-emerald-500/20"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
+            <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
               Email Address
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="user@example.com"
-              className="w-full bg-[#090A0F] border border-[#222634] rounded-lg p-2.5 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981]"
+              placeholder="alex@example.com"
+              className="w-full bg-[#0B0D14] border border-white/10 focus:border-emerald-500 rounded-xl p-3.5 text-slate-100 text-sm outline-none transition-all focus:ring-2 focus:ring-emerald-500/20"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
+            <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
               Password
             </label>
             <input
@@ -86,7 +102,7 @@ export default function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full bg-[#090A0F] border border-[#222634] rounded-lg p-2.5 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981]"
+              className="w-full bg-[#0B0D14] border border-white/10 focus:border-emerald-500 rounded-xl p-3.5 text-slate-100 text-sm outline-none transition-all focus:ring-2 focus:ring-emerald-500/20"
               required
             />
           </div>
@@ -94,17 +110,21 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#10B981] hover:bg-[#059669] text-white py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 mt-2"
+            className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-extrabold py-3.5 rounded-xl text-sm shadow-[0_0_20px_rgba(16,185,129,0.25)] transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2"
           >
-            {loading ? "Creating Account..." : "Register"}
+            {loading ? (
+              <span className="inline-block animate-spin border-2 border-black border-t-transparent rounded-full w-4 h-4"></span>
+            ) : (
+              <span>Complete Registration</span>
+            )}
           </button>
         </form>
 
-        <p className="text-xs text-center text-[#9CA3AF] mt-6">
-          Already have an account?{" "}
-          <a href="/login" className="text-[#10B981] hover:underline font-medium">
+        <p className="text-xs text-center text-slate-400 mt-6">
+          Already registered?{" "}
+          <Link href="/login" className="text-emerald-400 hover:underline font-bold">
             Sign In
-          </a>
+          </Link>
         </p>
       </div>
     </div>

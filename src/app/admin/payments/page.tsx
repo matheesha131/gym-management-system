@@ -210,33 +210,37 @@ export default function AdminPaymentsPage() {
   };
 
   return (
-    <div className="min-h-screen p-8 max-w-7xl mx-auto bg-[#090A0F] text-[#F3F4F6]">
+    <div className="min-h-screen p-6 md:p-10 max-w-7xl mx-auto bg-[#08090C] text-[#F8FAFC] font-sans">
       {/* Top Admin Navigation Header */}
       <AdminNav
         title="Counter Payments & Receipts"
         subtitle="Log manual counter payments and view financial audit history"
+        badgeText="Payments"
         actionButton={
           <button
             onClick={openLogModal}
-            className="bg-[#10B981] hover:bg-[#059669] text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md transition-colors flex items-center gap-2"
+            className="bg-emerald-500 hover:bg-emerald-400 text-black px-4 py-2.5 rounded-xl text-xs font-black shadow-[0_0_15px_rgba(16,185,129,0.25)] transition-all active:scale-[0.98] flex items-center gap-2"
           >
-            <span>+ Log Counter Payment</span>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Log Counter Payment</span>
           </button>
         }
       />
 
       {/* Search & Filter Bar */}
-      <div className="bg-[#12141C] border border-[#222634] rounded-xl p-4 mb-6">
+      <div className="glass-panel rounded-2xl p-3.5 mb-6 border border-white/10">
         <div className="relative">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search payments by receipt ref (e.g. REC-20260728-1001), member name, or code..."
-            className="w-full bg-[#090A0F] border border-[#222634] rounded-lg px-4 py-3 pl-10 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981]"
+            className="w-full bg-[#0B0D14] border border-white/10 rounded-xl px-4 py-3 pl-11 text-slate-100 text-sm outline-none focus:border-emerald-500 transition-all font-sans"
           />
           <svg
-            className="w-5 h-5 absolute left-3 top-3.5 text-[#9CA3AF]"
+            className="w-5 h-5 absolute left-3.5 top-3 text-slate-400"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -252,67 +256,70 @@ export default function AdminPaymentsPage() {
       </div>
 
       {error && (
-        <div className="bg-[#EF4444]/10 border border-[#EF4444] text-[#EF4444] p-4 rounded-lg mb-6 text-sm">
-          {error}
+        <div className="bg-rose-500/10 border border-rose-500/30 text-rose-300 p-4 rounded-2xl mb-6 text-xs flex items-center gap-2">
+          <span>⚠️ {error}</span>
         </div>
       )}
 
       {/* Audit Log Table */}
       {loading ? (
-        <div className="text-[#9CA3AF] py-16 text-center">Loading payment history...</div>
+        <div className="flex items-center justify-center py-24 text-slate-400 gap-3">
+          <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-sm font-medium">Loading payment log history...</span>
+        </div>
       ) : payments.length === 0 ? (
-        <div className="bg-[#12141C] border border-[#222634] rounded-xl p-12 text-center text-[#9CA3AF]">
+        <div className="glass-panel rounded-3xl p-12 text-center text-slate-400 text-xs border border-white/10">
           {searchQuery
             ? `No payments matching "${searchQuery}".`
             : "No counter payments logged yet. Click '+ Log Counter Payment' to record a transaction."}
         </div>
       ) : (
-        <div className="bg-[#12141C] border border-[#222634] rounded-xl overflow-hidden shadow-xl">
+        <div className="glass-panel rounded-3xl overflow-hidden shadow-2xl border border-white/10">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-sm">
+            <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-[#1A1D29] border-b border-[#222634] text-[#9CA3AF] font-semibold">
-                  <th className="py-3.5 px-6">Receipt Ref</th>
-                  <th className="py-3.5 px-6">Member</th>
-                  <th className="py-3.5 px-6">Plan Activated</th>
-                  <th className="py-3.5 px-6">Amount</th>
-                  <th className="py-3.5 px-6">Payment Method</th>
-                  <th className="py-3.5 px-6">Date & Time</th>
-                  <th className="py-3.5 px-6">Logged By</th>
+                <tr className="bg-[#0B0D14] border-b border-white/10 text-slate-400 font-bold uppercase tracking-wider text-[11px]">
+                  <th className="py-4 px-6">Receipt Ref</th>
+                  <th className="py-4 px-6">Member</th>
+                  <th className="py-4 px-6">Plan Activated</th>
+                  <th className="py-4 px-6">Amount</th>
+                  <th className="py-4 px-6">Payment Method</th>
+                  <th className="py-4 px-6">Date & Time</th>
+                  <th className="py-4 px-6">Logged By</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#222634]">
+              <tbody className="divide-y divide-white/5">
                 {payments.map((p) => (
                   <tr
                     key={p.id}
-                    className="hover:bg-[#1A1D29]/50 transition-colors"
+                    className="hover:bg-white/5 transition-colors"
                   >
-                    <td className="py-4 px-6 font-mono text-[#10B981] font-semibold">
+                    <td className="py-4 px-6 font-mono text-emerald-400 font-bold tabular-nums">
                       {p.receiptRef}
                     </td>
                     <td className="py-4 px-6">
-                      <div className="font-semibold text-[#F3F4F6]">
+                      <div className="font-extrabold text-white">
                         {p.member.name}
                       </div>
-                      <div className="text-xs font-mono text-[#9CA3AF]">
+                      <div className="text-[11px] font-mono text-slate-400 tabular-nums">
                         {p.member.memberCode || p.member.email}
                       </div>
                     </td>
-                    <td className="py-4 px-6 text-[#F3F4F6]">
+                    <td className="py-4 px-6 text-slate-200 font-medium">
                       {p.plan ? p.plan.name : "N/A"}
                     </td>
-                    <td className="py-4 px-6 font-mono text-[#F3F4F6] font-bold text-base">
+                    <td className="py-4 px-6 font-mono text-emerald-400 font-black text-base tabular-nums">
                       ${p.amount}
                     </td>
                     <td className="py-4 px-6">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold font-mono bg-[#1A1D29] text-[#F3F4F6] border border-[#222634]">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-white/5 text-slate-300 border border-white/10">
                         {formatPaymentMethod(p.paymentMethod)}
                       </span>
                     </td>
-                    <td className="py-4 px-6 text-[#9CA3AF] font-mono text-xs">
+                    <td className="py-4 px-6 text-slate-400 font-mono text-xs tabular-nums">
                       {formatDate(p.paidAt)}
                     </td>
-                    <td className="py-4 px-6 text-[#9CA3AF] text-xs">
+                    <td className="py-4 px-6 text-slate-400 text-xs">
                       {p.createdBy ? p.createdBy.name : "System"}
                     </td>
                   </tr>
@@ -325,30 +332,30 @@ export default function AdminPaymentsPage() {
 
       {/* Log Payment Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-          <div className="bg-[#12141C] border border-[#222634] w-full max-w-md rounded-xl p-6 shadow-2xl">
-            <h2 className="text-2xl font-bold text-[#F3F4F6] mb-1">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <div className="glass-panel border border-white/10 w-full max-w-md rounded-3xl p-6 shadow-2xl">
+            <h2 className="text-xl font-black text-white mb-1">
               Log Counter Payment
             </h2>
-            <p className="text-xs text-[#9CA3AF] mb-4">
-              Recording payment auto-activates member's subscription and generates receipt.
+            <p className="text-xs text-slate-400 mb-6">
+              Recording payment auto-activates member subscription and generates receipt reference.
             </p>
 
             {formError && (
-              <div className="bg-[#EF4444]/10 border border-[#EF4444] text-[#EF4444] text-sm p-3 rounded-lg mb-4">
+              <div className="bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs p-3.5 rounded-2xl mb-4">
                 {formError}
               </div>
             )}
 
             <form onSubmit={handleLogPaymentSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
+                <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                   Select Member *
                 </label>
                 <select
                   value={selectedMemberId}
                   onChange={(e) => setSelectedMemberId(e.target.value)}
-                  className="w-full bg-[#090A0F] border border-[#222634] rounded-lg p-2.5 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981]"
+                  className="w-full bg-[#0B0D14] border border-white/10 focus:border-emerald-500 rounded-xl p-3 text-slate-100 text-sm outline-none"
                   required
                 >
                   <option value="">-- Choose Member --</option>
@@ -361,13 +368,13 @@ export default function AdminPaymentsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
+                <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                   Select Membership Plan *
                 </label>
                 <select
                   value={selectedPlanId}
                   onChange={(e) => handlePlanChange(e.target.value)}
-                  className="w-full bg-[#090A0F] border border-[#222634] rounded-lg p-2.5 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981]"
+                  className="w-full bg-[#0B0D14] border border-white/10 focus:border-emerald-500 rounded-xl p-3 text-slate-100 text-sm outline-none"
                   required
                 >
                   <option value="">-- Choose Plan --</option>
@@ -381,13 +388,13 @@ export default function AdminPaymentsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                     Payment Method *
                   </label>
                   <select
                     value={paymentMethod}
                     onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="w-full bg-[#090A0F] border border-[#222634] rounded-lg p-2.5 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981]"
+                    className="w-full bg-[#0B0D14] border border-white/10 focus:border-emerald-500 rounded-xl p-3 text-slate-100 text-sm outline-none"
                     required
                   >
                     <option value="cash">Cash</option>
@@ -398,7 +405,7 @@ export default function AdminPaymentsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                     Amount ($) *
                   </label>
                   <input
@@ -407,14 +414,14 @@ export default function AdminPaymentsPage() {
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="49.99"
-                    className="w-full bg-[#090A0F] border border-[#222634] rounded-lg p-2.5 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981] font-mono"
+                    className="w-full bg-[#0B0D14] border border-white/10 focus:border-emerald-500 rounded-xl p-3 text-slate-100 text-sm outline-none font-mono tabular-nums"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
+                <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                   Notes (Optional)
                 </label>
                 <textarea
@@ -422,22 +429,22 @@ export default function AdminPaymentsPage() {
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="e.g. Counter cash payment receipt issued..."
                   rows={2}
-                  className="w-full bg-[#090A0F] border border-[#222634] rounded-lg p-2.5 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981]"
+                  className="w-full bg-[#0B0D14] border border-white/10 focus:border-emerald-500 rounded-xl p-3 text-slate-100 text-sm outline-none"
                 />
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-[#222634] mt-6">
+              <div className="flex gap-3 pt-4 border-t border-white/10 mt-6">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 bg-[#1A1D29] hover:bg-[#222634] text-[#F3F4F6] py-2 rounded-lg text-sm font-medium transition-colors"
+                  className="flex-1 bg-white/5 hover:bg-white/10 text-slate-300 py-2.5 rounded-xl text-xs font-bold transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 bg-[#10B981] hover:bg-[#059669] text-white py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                  className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black py-2.5 rounded-xl text-xs font-black shadow-lg transition-all disabled:opacity-50"
                 >
                   {submitting ? "Processing..." : "Log & Activate"}
                 </button>

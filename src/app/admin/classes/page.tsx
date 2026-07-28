@@ -154,6 +154,11 @@ export default function AdminClassesPage() {
       return;
     }
 
+    if (new Date(startTime) >= new Date(endTime)) {
+      setScheduleFormError("End time must be after start time");
+      return;
+    }
+
     try {
       setScheduleSubmitting(true);
       const res = await fetch("/api/admin/classes/schedules", {
@@ -200,57 +205,67 @@ export default function AdminClassesPage() {
   };
 
   return (
-    <div className="min-h-screen p-8 max-w-7xl mx-auto bg-[#090A0F] text-[#F3F4F6] font-sans">
+    <div className="min-h-screen p-6 md:p-10 max-w-7xl mx-auto bg-[#08090C] text-[#F8FAFC] font-sans">
       {/* Top Admin Navigation Header */}
       <AdminNav
-        title="Gym Class Scheduling & Operations"
+        title="Class Scheduling & Operations"
         subtitle="Create class templates, assign trainers, set capacities, and manage session schedules"
+        badgeText="Class Manager"
       />
 
       {/* Global Error Banner */}
       {error && (
-        <div className="bg-[#EF4444]/15 border border-[#EF4444] text-[#F87171] p-4 rounded-xl mb-8">
-          {error}
+        <div className="bg-rose-500/10 border border-rose-500/30 text-rose-300 p-4 rounded-2xl mb-8 text-xs flex items-center gap-2">
+          <span>⚠️ {error}</span>
         </div>
       )}
 
       {/* Action Buttons Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-        <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <span>🏋️‍♂️</span> Class Templates & Schedules
+        <h2 className="text-lg font-black text-white tracking-tight flex items-center gap-2">
+          <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          Classes & Operational Timetable
         </h2>
         <div className="flex items-center gap-3">
           <button
             onClick={openCreateClassModal}
-            className="bg-[#222634] hover:bg-[#2D3346] text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-colors border border-[#222634]"
+            className="bg-white/5 hover:bg-white/10 text-slate-200 border border-white/10 px-4 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-[0.98]"
           >
             + Create Class Template
           </button>
           <button
             onClick={() => openScheduleModal()}
-            className="bg-[#10B981] hover:bg-[#059669] text-white px-4 py-2.5 rounded-xl font-semibold text-sm shadow-md transition-colors flex items-center gap-2"
+            className="bg-emerald-500 hover:bg-emerald-400 text-black px-4 py-2.5 rounded-xl text-xs font-black shadow-[0_0_15px_rgba(16,185,129,0.25)] transition-all active:scale-[0.98] flex items-center gap-2"
           >
-            <span>📅 Schedule New Session</span>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Schedule New Session</span>
           </button>
         </div>
       </div>
 
       {loading ? (
-        <div className="text-[#9CA3AF] py-12 text-center">Loading gym classes and schedules...</div>
+        <div className="flex items-center justify-center py-24 text-slate-400 gap-3">
+          <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-sm font-medium">Loading classes and schedules...</span>
+        </div>
       ) : (
-        <div className="space-y-10">
+        <div className="space-y-12">
           {/* Section 1: Scheduled Sessions Stream */}
           <div>
-            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <span>🗓️</span> Upcoming Scheduled Class Sessions
+            <h3 className="text-sm font-black text-slate-300 uppercase tracking-wider mb-4">
+              Upcoming Scheduled Class Sessions ({schedules.length})
             </h3>
 
             {schedules.length === 0 ? (
-              <div className="bg-[#12141C] border border-[#222634] rounded-2xl p-8 text-center text-[#9CA3AF]">
-                No class sessions scheduled yet. Click "📅 Schedule New Session" to create one.
+              <div className="glass-panel rounded-3xl p-8 text-center text-slate-400 text-xs border border-white/10">
+                No class sessions scheduled yet. Click "Schedule New Session" to create one.
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
                 {schedules.map((item) => {
                   const availableSlots = Math.max(0, item.classCapacity - item.currentBookings);
                   const isFull = availableSlots === 0;
@@ -258,43 +273,43 @@ export default function AdminClassesPage() {
                   return (
                     <div
                       key={item.id}
-                      className="bg-[#12141C] border border-[#222634] rounded-2xl p-6 flex flex-col justify-between shadow-lg relative overflow-hidden"
+                      className="glass-card rounded-3xl p-6 flex flex-col justify-between shadow-xl relative border border-white/10"
                     >
                       <div>
-                        <div className="flex justify-between items-start mb-3">
-                          <h4 className="text-lg font-bold text-white">{item.className}</h4>
+                        <div className="flex justify-between items-start mb-3 gap-2">
+                          <h4 className="text-lg font-black text-white tracking-tight">{item.className}</h4>
                           <span
-                            className={`text-xs px-2.5 py-1 rounded-full font-bold uppercase ${
+                            className={`text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider shrink-0 ${
                               isFull
-                                ? "bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30"
-                                : "bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30"
+                                ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                                : "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                             }`}
                           >
                             {isFull ? "FULL" : `${availableSlots} Slots Left`}
                           </span>
                         </div>
 
-                        <div className="space-y-2 text-sm text-[#9CA3AF] mb-4">
-                          <div className="flex items-center gap-2">
-                            <span>📅</span>
-                            <span className="text-white font-medium">{formatDate(item.startTime)}</span>
+                        <div className="space-y-2 text-xs text-slate-300 mb-6 bg-[#0B0D14] border border-white/10 rounded-2xl p-3.5 font-mono tabular-nums">
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-400 font-sans text-[11px] font-bold uppercase">Date</span>
+                            <span className="text-white font-semibold">{formatDate(item.startTime)}</span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span>⏰</span>
-                            <span className="font-mono text-white">
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-400 font-sans text-[11px] font-bold uppercase">Time</span>
+                            <span className="text-emerald-400 font-bold">
                               {formatTime(item.startTime)} – {formatTime(item.endTime)}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span>👤</span>
-                            <span>Trainer: <strong className="text-white">{item.trainerName || "Unassigned"}</strong></span>
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-400 font-sans text-[11px] font-bold uppercase">Trainer</span>
+                            <span className="text-white font-semibold">{item.trainerName || "Staff Trainer"}</span>
                           </div>
                         </div>
                       </div>
 
-                      <div className="pt-4 border-t border-[#222634] flex justify-between items-center text-xs">
-                        <span className="text-[#9CA3AF]">Booked / Capacity</span>
-                        <span className="font-mono font-bold text-white text-sm">
+                      <div className="pt-4 border-t border-white/10 flex justify-between items-center text-xs">
+                        <span className="text-slate-400 font-medium">Booked / Capacity</span>
+                        <span className="font-mono font-bold text-white text-sm tabular-nums">
                           {item.currentBookings} / {item.classCapacity}
                         </span>
                       </div>
@@ -307,42 +322,42 @@ export default function AdminClassesPage() {
 
           {/* Section 2: Gym Class Templates List */}
           <div>
-            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <span>🏋️</span> Gym Class Templates ({classes.length})
+            <h3 className="text-sm font-black text-slate-300 uppercase tracking-wider mb-4">
+              Gym Class Templates ({classes.length})
             </h3>
 
             {classes.length === 0 ? (
-              <div className="bg-[#12141C] border border-[#222634] rounded-2xl p-8 text-center text-[#9CA3AF]">
+              <div className="glass-panel rounded-3xl p-8 text-center text-slate-400 text-xs border border-white/10">
                 No class templates created yet. Click "+ Create Class Template" to get started.
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
                 {classes.map((cls) => (
                   <div
                     key={cls.id}
-                    className="bg-[#12141C] border border-[#222634] rounded-2xl p-6 flex flex-col justify-between shadow-lg"
+                    className="glass-card rounded-3xl p-6 flex flex-col justify-between shadow-xl border border-white/10"
                   >
                     <div>
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="text-lg font-bold text-white">{cls.name}</h4>
-                        <span className="text-xs bg-[#222634] text-[#9CA3AF] px-2.5 py-1 rounded-full font-mono">
+                      <div className="flex justify-between items-start mb-2 gap-2">
+                        <h4 className="text-lg font-black text-white tracking-tight">{cls.name}</h4>
+                        <span className="text-[10px] bg-white/5 text-slate-300 border border-white/10 px-2.5 py-0.5 rounded-full font-mono tabular-nums font-bold">
                           Cap: {cls.capacity}
                         </span>
                       </div>
-                      <p className="text-[#9CA3AF] text-sm mb-4 min-h-[40px]">
+                      <p className="text-xs text-slate-400 mb-4 min-h-[36px] leading-relaxed">
                         {cls.description || "No description provided."}
                       </p>
                       {cls.trainerName && (
-                        <p className="text-xs text-[#9CA3AF]">
-                          Default Trainer: <strong className="text-white">{cls.trainerName}</strong>
+                        <p className="text-xs text-slate-400">
+                          Default Trainer: <strong className="text-white font-semibold">{cls.trainerName}</strong>
                         </p>
                       )}
                     </div>
 
-                    <div className="mt-4 pt-4 border-t border-[#222634]">
+                    <div className="mt-6 pt-4 border-t border-white/10">
                       <button
                         onClick={() => openScheduleModal(cls.id)}
-                        className="w-full bg-[#222634] hover:bg-[#2D3346] text-[#10B981] font-semibold py-2 rounded-xl text-xs transition-colors"
+                        className="w-full bg-white/5 hover:bg-emerald-500/15 text-emerald-400 hover:text-emerald-300 border border-white/10 hover:border-emerald-500/30 font-bold py-2.5 rounded-xl text-xs transition-all active:scale-[0.98]"
                       >
                         + Schedule Session
                       </button>
@@ -357,24 +372,24 @@ export default function AdminClassesPage() {
 
       {/* Modal 1: Create Class Template Modal */}
       {isClassModalOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#12141C] border border-[#222634] rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-4 pb-3 border-b border-[#222634]">
-              <h3 className="text-lg font-bold text-white">Create Gym Class Template</h3>
-              <button onClick={() => setIsClassModalOpen(false)} className="text-[#9CA3AF] hover:text-white text-lg font-bold">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="glass-panel border border-white/10 rounded-3xl max-w-md w-full p-6 shadow-2xl">
+            <div className="flex justify-between items-center mb-4 pb-3 border-b border-white/10">
+              <h3 className="text-lg font-black text-white">Create Class Template</h3>
+              <button onClick={() => setIsClassModalOpen(false)} className="text-slate-400 hover:text-white text-sm font-bold p-1">
                 ✕
               </button>
             </div>
 
             {classFormError && (
-              <div className="bg-[#EF4444]/15 border border-[#EF4444] text-[#F87171] text-xs p-3 rounded-lg mb-4">
+              <div className="bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs p-3.5 rounded-2xl mb-4">
                 {classFormError}
               </div>
             )}
 
             <form onSubmit={handleCreateClassSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-[#9CA3AF] mb-1 uppercase">
+                <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                   Class Name *
                 </label>
                 <input
@@ -382,13 +397,13 @@ export default function AdminClassesPage() {
                   value={className}
                   onChange={(e) => setClassName(e.target.value)}
                   placeholder="e.g. HIIT Power Hour, Yoga Flow, Spin Master"
-                  className="w-full bg-[#090A0F] border border-[#222634] focus:border-[#10B981] rounded-xl p-3 text-sm text-white outline-none"
+                  className="w-full bg-[#0B0D14] border border-white/10 focus:border-emerald-500 rounded-xl p-3 text-xs text-white outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#9CA3AF] mb-1 uppercase">
+                <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                   Description
                 </label>
                 <textarea
@@ -396,13 +411,13 @@ export default function AdminClassesPage() {
                   value={classDescription}
                   onChange={(e) => setClassDescription(e.target.value)}
                   placeholder="Brief summary of class goals and intensity..."
-                  className="w-full bg-[#090A0F] border border-[#222634] focus:border-[#10B981] rounded-xl p-3 text-sm text-white outline-none"
+                  className="w-full bg-[#0B0D14] border border-white/10 focus:border-emerald-500 rounded-xl p-3 text-xs text-white outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-[#9CA3AF] mb-1 uppercase">
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                     Max Capacity *
                   </label>
                   <input
@@ -410,19 +425,19 @@ export default function AdminClassesPage() {
                     min={1}
                     value={classCapacity}
                     onChange={(e) => setClassCapacity(Number(e.target.value))}
-                    className="w-full bg-[#090A0F] border border-[#222634] focus:border-[#10B981] rounded-xl p-3 text-sm text-white font-mono outline-none"
+                    className="w-full bg-[#0B0D14] border border-white/10 focus:border-emerald-500 rounded-xl p-3 text-xs text-white font-mono tabular-nums outline-none"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#9CA3AF] mb-1 uppercase">
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                     Default Trainer
                   </label>
                   <select
                     value={classTrainerId}
                     onChange={(e) => setClassTrainerId(e.target.value)}
-                    className="w-full bg-[#090A0F] border border-[#222634] focus:border-[#10B981] rounded-xl p-3 text-sm text-white outline-none"
+                    className="w-full bg-[#0B0D14] border border-white/10 focus:border-emerald-500 rounded-xl p-3 text-xs text-white outline-none"
                   >
                     <option value="">Select Trainer (Optional)</option>
                     {trainers.map((t) => (
@@ -434,18 +449,18 @@ export default function AdminClassesPage() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4">
+              <div className="flex justify-end gap-3 pt-4 border-t border-white/10 mt-6">
                 <button
                   type="button"
                   onClick={() => setIsClassModalOpen(false)}
-                  className="bg-[#222634] hover:bg-[#2D3346] text-[#F3F4F6] px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+                  className="bg-white/5 hover:bg-white/10 text-slate-300 px-4 py-2.5 rounded-xl text-xs font-bold transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={classSubmitting}
-                  className="bg-[#10B981] hover:bg-[#059669] disabled:opacity-50 text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg transition-colors"
+                  className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black px-5 py-2.5 rounded-xl text-xs font-black shadow-lg transition-all"
                 >
                   {classSubmitting ? "Creating..." : "Save Class Template"}
                 </button>
@@ -457,30 +472,30 @@ export default function AdminClassesPage() {
 
       {/* Modal 2: Schedule Class Session Modal */}
       {isScheduleModalOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#12141C] border border-[#222634] rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-4 pb-3 border-b border-[#222634]">
-              <h3 className="text-lg font-bold text-white">Schedule Class Session</h3>
-              <button onClick={() => setIsScheduleModalOpen(false)} className="text-[#9CA3AF] hover:text-white text-lg font-bold">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="glass-panel border border-white/10 rounded-3xl max-w-md w-full p-6 shadow-2xl">
+            <div className="flex justify-between items-center mb-4 pb-3 border-b border-white/10">
+              <h3 className="text-lg font-black text-white">Schedule Class Session</h3>
+              <button onClick={() => setIsScheduleModalOpen(false)} className="text-slate-400 hover:text-white text-sm font-bold p-1">
                 ✕
               </button>
             </div>
 
             {scheduleFormError && (
-              <div className="bg-[#EF4444]/15 border border-[#EF4444] text-[#F87171] text-xs p-3 rounded-lg mb-4">
+              <div className="bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs p-3.5 rounded-2xl mb-4">
                 {scheduleFormError}
               </div>
             )}
 
             <form onSubmit={handleScheduleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-[#9CA3AF] mb-1 uppercase">
+                <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                   Select Gym Class *
                 </label>
                 <select
                   value={selectedClassId}
                   onChange={(e) => setSelectedClassId(e.target.value)}
-                  className="w-full bg-[#090A0F] border border-[#222634] focus:border-[#10B981] rounded-xl p-3 text-sm text-white outline-none"
+                  className="w-full bg-[#0B0D14] border border-white/10 focus:border-emerald-500 rounded-xl p-3 text-xs text-white outline-none"
                   required
                 >
                   <option value="">-- Choose Class --</option>
@@ -493,13 +508,13 @@ export default function AdminClassesPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#9CA3AF] mb-1 uppercase">
+                <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                   Session Trainer
                 </label>
                 <select
                   value={scheduleTrainerId}
                   onChange={(e) => setScheduleTrainerId(e.target.value)}
-                  className="w-full bg-[#090A0F] border border-[#222634] focus:border-[#10B981] rounded-xl p-3 text-sm text-white outline-none"
+                  className="w-full bg-[#0B0D14] border border-white/10 focus:border-emerald-500 rounded-xl p-3 text-xs text-white outline-none"
                 >
                   <option value="">Use Default Class Trainer</option>
                   {trainers.map((t) => (
@@ -511,43 +526,43 @@ export default function AdminClassesPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#9CA3AF] mb-1 uppercase">
+                <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                   Start Time *
                 </label>
                 <input
                   type="datetime-local"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
-                  className="w-full bg-[#090A0F] border border-[#222634] focus:border-[#10B981] rounded-xl p-3 text-sm text-white outline-none"
+                  className="w-full bg-[#0B0D14] border border-white/10 focus:border-emerald-500 rounded-xl p-3 text-xs text-white outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#9CA3AF] mb-1 uppercase">
+                <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                   End Time *
                 </label>
                 <input
                   type="datetime-local"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  className="w-full bg-[#090A0F] border border-[#222634] focus:border-[#10B981] rounded-xl p-3 text-sm text-white outline-none"
+                  className="w-full bg-[#0B0D14] border border-white/10 focus:border-emerald-500 rounded-xl p-3 text-xs text-white outline-none"
                   required
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4">
+              <div className="flex justify-end gap-3 pt-4 border-t border-white/10 mt-6">
                 <button
                   type="button"
                   onClick={() => setIsScheduleModalOpen(false)}
-                  className="bg-[#222634] hover:bg-[#2D3346] text-[#F3F4F6] px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+                  className="bg-white/5 hover:bg-white/10 text-slate-300 px-4 py-2.5 rounded-xl text-xs font-bold transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={scheduleSubmitting}
-                  className="bg-[#10B981] hover:bg-[#059669] disabled:opacity-50 text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg transition-colors"
+                  className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black px-5 py-2.5 rounded-xl text-xs font-black shadow-lg transition-all"
                 >
                   {scheduleSubmitting ? "Scheduling..." : "Publish Session"}
                 </button>

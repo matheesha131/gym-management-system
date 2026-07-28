@@ -133,93 +133,101 @@ export default function MemberPortalClassesPage() {
   };
 
   return (
-    <div className="min-h-screen p-8 max-w-7xl mx-auto bg-[#090A0F] text-[#F3F4F6] font-sans">
+    <div className="min-h-screen p-6 md:p-10 max-w-7xl mx-auto bg-[#08090C] text-[#F8FAFC] font-sans">
       {/* Member Navigation Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 mb-8 border-b border-[#222634]">
-        <div>
-          <h1 className="text-3xl font-extrabold text-[#10B981] tracking-tight">
-            Gym Classes & Session Booking
-          </h1>
-          <p className="text-[#9CA3AF] text-sm mt-1">
-            Browse upcoming fitness sessions, reserve your spot, and manage class bookings
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-[#12141C] p-1.5 rounded-xl border border-[#222634]">
-            <Link
-              href="/portal"
-              className="px-4 py-1.5 text-xs font-semibold rounded-lg text-[#9CA3AF] hover:text-[#F3F4F6] transition-colors"
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/portal/classes"
-              className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-[#10B981] text-white shadow-sm"
-            >
-              Classes & Booking
-            </Link>
+      <header className="sticky top-0 z-40 bg-[#08090C]/80 backdrop-blur-xl border-b border-white/[0.08] pb-6 mb-8 pt-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+              Class Booking & Schedule
+            </h1>
+            <p className="text-slate-400 text-xs md:text-sm mt-1">
+              Reserve your spot in upcoming fitness sessions and manage confirmed bookings
+            </p>
           </div>
 
-          <button
-            onClick={() => signOut()}
-            className="bg-[#222634] hover:bg-[#2D3346] text-[#9CA3AF] hover:text-white px-4 py-2 rounded-xl text-xs font-semibold transition-colors"
-          >
-            Sign Out
-          </button>
+          <div className="flex items-center gap-3">
+            <nav aria-label="Portal Navigation" className="flex items-center gap-1 bg-[#121624] p-1.5 rounded-2xl border border-white/10 shadow-inner">
+              <Link
+                href="/portal"
+                className="px-4 py-2 text-xs font-bold rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/portal/classes"
+                className="px-4 py-2 text-xs font-black rounded-xl bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all"
+              >
+                Classes & Booking
+              </Link>
+            </nav>
+
+            <button
+              onClick={() => signOut()}
+              className="bg-white/5 hover:bg-rose-500/15 text-slate-400 hover:text-rose-400 border border-white/10 hover:border-rose-500/30 px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-[0.98]"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
-      </div>
+      </header>
 
       {/* Global Error Banner */}
       {error && (
-        <div className="bg-[#EF4444]/15 border border-[#EF4444] text-[#F87171] p-4 rounded-xl mb-8 flex items-center justify-between">
-          <span>{error}</span>
-          <button onClick={() => setError(null)} className="text-sm font-bold">✕</button>
+        <div className="bg-rose-500/10 border border-rose-500/30 text-rose-300 p-4 rounded-2xl mb-8 flex items-center justify-between text-xs">
+          <span>⚠️ {error}</span>
+          <button onClick={() => setError(null)} className="text-sm font-bold p-1">✕</button>
         </div>
       )}
 
       {loading ? (
-        <div className="text-[#9CA3AF] py-12 text-center">Loading class schedule...</div>
+        <div className="flex items-center justify-center py-24 text-slate-400 gap-3">
+          <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-sm font-medium">Loading class schedule...</span>
+        </div>
       ) : (
-        <div className="space-y-10">
+        <div className="space-y-12">
           {/* Section 1: My Confirmed Bookings */}
           {myBookings.filter((b) => b.status === "confirmed" || b.status === "booked").length > 0 && (
             <div>
-              <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <span>🎫</span> My Booked Sessions
+              <h2 className="text-lg font-black text-white mb-4 tracking-tight flex items-center gap-2">
+                <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                </svg>
+                My Reserved Sessions
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
                 {myBookings
                   .filter((b) => b.status === "confirmed" || b.status === "booked")
                   .map((b) => (
                     <div
                       key={b.id}
-                      className="bg-[#10B981]/10 border-2 border-[#10B981]/40 rounded-2xl p-6 flex flex-col justify-between shadow-xl relative"
+                      className="glass-panel rounded-3xl p-6 flex flex-col justify-between shadow-2xl relative border-2 border-emerald-500/40 bg-emerald-950/20"
                     >
                       <div>
                         <div className="flex justify-between items-start mb-3">
-                          <h3 className="text-lg font-extrabold text-white">{b.className}</h3>
-                          <span className="bg-[#10B981] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                          <h3 className="text-lg font-black text-white">{b.className}</h3>
+                          <span className="bg-emerald-500 text-black text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                             CONFIRMED
                           </span>
                         </div>
 
-                        <div className="space-y-2 text-sm text-[#9CA3AF] mb-4">
-                          <div className="flex items-center gap-2">
-                            <span>📅</span>
-                            <span className="text-white font-semibold">{formatDate(b.startTime)}</span>
+                        <div className="space-y-2 text-xs text-slate-300 mb-6 bg-[#0B0D14] border border-white/10 rounded-2xl p-3.5 font-mono tabular-nums">
+                          <div className="flex justify-between">
+                            <span className="text-slate-400">Date</span>
+                            <span className="text-white font-bold">{formatDate(b.startTime)}</span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span>⏰</span>
-                            <span className="font-mono text-white">
+                          <div className="flex justify-between">
+                            <span className="text-slate-400">Time</span>
+                            <span className="text-emerald-400 font-bold">
                               {formatTime(b.startTime)} – {formatTime(b.endTime)}
                             </span>
                           </div>
                           {b.trainerName && (
-                            <div className="flex items-center gap-2">
-                              <span>👤</span>
-                              <span>Trainer: <strong className="text-white">{b.trainerName}</strong></span>
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Trainer</span>
+                              <span className="text-white font-bold">{b.trainerName}</span>
                             </div>
                           )}
                         </div>
@@ -228,9 +236,9 @@ export default function MemberPortalClassesPage() {
                       <button
                         onClick={() => handleCancelBooking(b.id)}
                         disabled={actionLoadingId === b.id}
-                        className="w-full bg-[#EF4444]/20 hover:bg-[#EF4444] text-[#F87171] hover:text-white font-bold py-2.5 rounded-xl text-xs transition-all border border-[#EF4444]/40"
+                        className="w-full bg-rose-500/15 hover:bg-rose-500 text-rose-300 hover:text-white font-extrabold py-3 rounded-xl text-xs transition-all border border-rose-500/30 active:scale-[0.98]"
                       >
-                        {actionLoadingId === b.id ? "Cancelling..." : "Cancel Booking"}
+                        {actionLoadingId === b.id ? "Cancelling..." : "Cancel Reservation"}
                       </button>
                     </div>
                   ))}
@@ -240,68 +248,71 @@ export default function MemberPortalClassesPage() {
 
           {/* Section 2: Browse Upcoming Classes Schedule */}
           <div>
-            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <span>📅</span> Browse Upcoming Class Schedule
+            <h2 className="text-lg font-black text-white mb-4 tracking-tight flex items-center gap-2">
+              <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Upcoming Classes & Slot Availability
             </h2>
 
             {schedules.length === 0 ? (
-              <div className="bg-[#12141C] border border-[#222634] rounded-2xl p-12 text-center text-[#9CA3AF]">
-                No upcoming class sessions available right now. Check back soon!
+              <div className="glass-panel rounded-3xl p-12 text-center text-slate-400 text-xs border border-white/10">
+                No upcoming class sessions scheduled. Please check back later!
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
                 {schedules.map((item) => {
                   const isFull = item.availableSlots === 0;
 
                   return (
                     <div
                       key={item.id}
-                      className={`bg-[#12141C] border ${
+                      className={`glass-card rounded-3xl p-6 flex flex-col justify-between shadow-xl relative border ${
                         item.isBooked
-                          ? "border-[#10B981]/50 bg-[#10B981]/5"
+                          ? "border-emerald-500/50 bg-emerald-950/10"
                           : isFull
-                          ? "border-[#222634]/60 opacity-80"
-                          : "border-[#222634]"
-                      } rounded-2xl p-6 flex flex-col justify-between shadow-lg relative`}
+                          ? "border-white/5 opacity-70"
+                          : "border-white/10"
+                      }`}
                     >
                       <div>
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="text-xl font-bold text-white">{item.className}</h3>
+                        <div className="flex justify-between items-start mb-2 gap-2">
+                          <h3 className="text-lg font-black text-white tracking-tight">{item.className}</h3>
                           <span
-                            className={`text-xs px-2.5 py-1 rounded-full font-bold uppercase ${
+                            className={`text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider shrink-0 ${
                               item.isBooked
                                 ? "bg-purple-500/20 text-purple-300 border border-purple-500/40"
                                 : isFull
-                                ? "bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/30"
-                                : "bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30"
+                                ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                                : "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                             }`}
                           >
                             {item.isBooked
-                              ? "BOOKED"
+                              ? "RESERVED"
                               : isFull
                               ? "FULL"
                               : `${item.availableSlots} SLOTS LEFT`}
                           </span>
                         </div>
 
-                        <p className="text-[#9CA3AF] text-sm mb-4 min-h-[40px]">
-                          {item.classDescription || "No description available."}
+                        <p className="text-xs text-slate-400 mb-4 min-h-[36px] leading-relaxed">
+                          {item.classDescription || "No description available for this session."}
                         </p>
 
-                        <div className="space-y-2 text-sm text-[#9CA3AF] mb-6 bg-[#090A0F] border border-[#222634] rounded-xl p-3">
+                        <div className="space-y-2 text-xs text-slate-300 mb-6 bg-[#0B0D14] border border-white/10 rounded-2xl p-3.5 font-mono tabular-nums">
                           <div className="flex justify-between items-center">
-                            <span className="text-xs uppercase font-semibold">Date</span>
-                            <span className="text-white font-medium">{formatDate(item.startTime)}</span>
+                            <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Date</span>
+                            <span className="text-white font-semibold">{formatDate(item.startTime)}</span>
                           </div>
                           <div className="flex justify-between items-center">
-                            <span className="text-xs uppercase font-semibold">Time</span>
-                            <span className="font-mono text-white">
+                            <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Time</span>
+                            <span className="text-emerald-400 font-bold">
                               {formatTime(item.startTime)} – {formatTime(item.endTime)}
                             </span>
                           </div>
                           <div className="flex justify-between items-center">
-                            <span className="text-xs uppercase font-semibold">Trainer</span>
-                            <span className="text-white font-medium">{item.trainerName || "Unassigned"}</span>
+                            <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Trainer</span>
+                            <span className="text-white font-semibold">{item.trainerName || "Staff Trainer"}</span>
                           </div>
                         </div>
                       </div>
@@ -312,24 +323,24 @@ export default function MemberPortalClassesPage() {
                           <button
                             onClick={() => handleCancelBooking(item.userBookingId!)}
                             disabled={actionLoadingId === item.userBookingId}
-                            className="w-full bg-[#EF4444]/20 hover:bg-[#EF4444] text-[#F87171] hover:text-white font-bold py-3 rounded-xl text-xs transition-all border border-[#EF4444]/40"
+                            className="w-full bg-rose-500/15 hover:bg-rose-500 text-rose-300 hover:text-white font-extrabold py-3 rounded-xl text-xs transition-all border border-rose-500/30 active:scale-[0.98]"
                           >
-                            {actionLoadingId === item.userBookingId ? "Cancelling..." : "Cancel Booking"}
+                            {actionLoadingId === item.userBookingId ? "Cancelling..." : "Cancel Reservation"}
                           </button>
                         ) : isFull ? (
                           <button
                             disabled
-                            className="w-full bg-[#222634] text-[#6B7280] font-bold py-3 rounded-xl text-xs cursor-not-allowed uppercase"
+                            className="w-full bg-white/5 text-slate-500 font-bold py-3 rounded-xl text-xs cursor-not-allowed uppercase border border-white/5"
                           >
-                            Class Full
+                            Class Capacity Full
                           </button>
                         ) : (
                           <button
                             onClick={() => handleBookSlot(item.id)}
                             disabled={actionLoadingId === item.id}
-                            className="w-full bg-[#10B981] hover:bg-[#059669] text-white font-bold py-3 rounded-xl text-xs shadow-lg transition-all"
+                            className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold py-3 rounded-xl text-xs shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all active:scale-[0.98]"
                           >
-                            {actionLoadingId === item.id ? "Booking..." : "Book Class Slot"}
+                            {actionLoadingId === item.id ? "Reserving..." : "Reserve Class Slot"}
                           </button>
                         )}
                       </div>

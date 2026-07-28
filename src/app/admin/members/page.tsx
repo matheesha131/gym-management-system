@@ -148,15 +148,15 @@ export default function AdminMembersPage() {
     setSelectedMemberId(memberId);
     setProfileData(null);
     setProfileError(null);
-    setProfileLoading(true);
 
     try {
+      setProfileLoading(true);
       const res = await fetch(`/api/admin/members/${memberId}`);
-      if (!res.ok) throw new Error("Failed to load member profile");
+      if (!res.ok) throw new Error("Failed to load member profile details");
       const data = await res.json();
       setProfileData(data);
     } catch (err: any) {
-      setProfileError(err.message || "Failed to load profile");
+      setProfileError(err.message || "An error occurred");
     } finally {
       setProfileLoading(false);
     }
@@ -167,7 +167,7 @@ export default function AdminMembersPage() {
     setProfileData(null);
   };
 
-  const formatDate = (dateStr?: string | Date) => {
+  const formatDate = (dateStr?: string) => {
     if (!dateStr) return "-";
     return new Date(dateStr).toLocaleDateString("en-US", {
       year: "numeric",
@@ -177,33 +177,37 @@ export default function AdminMembersPage() {
   };
 
   return (
-    <div className="min-h-screen p-8 max-w-7xl mx-auto bg-[#090A0F] text-[#F3F4F6]">
+    <div className="min-h-screen p-6 md:p-10 max-w-7xl mx-auto bg-[#08090C] text-[#F8FAFC] font-sans">
       {/* Top Admin Navigation Header */}
       <AdminNav
         title="Member Directory"
         subtitle="Register new members, view profiles, and monitor subscription status"
+        badgeText="Member Hub"
         actionButton={
           <button
             onClick={openRegisterModal}
-            className="bg-[#10B981] hover:bg-[#059669] text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md transition-colors flex items-center gap-2"
+            className="bg-emerald-500 hover:bg-emerald-400 text-black px-4 py-2.5 rounded-xl text-xs font-black shadow-[0_0_15px_rgba(16,185,129,0.25)] transition-all active:scale-[0.98] flex items-center gap-2"
           >
-            <span>+ Register New Member</span>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Register New Member</span>
           </button>
         }
       />
 
-      {/* Search & Filters */}
-      <div className="bg-[#12141C] border border-[#222634] rounded-xl p-4 mb-6">
+      {/* Search Bar */}
+      <div className="glass-panel rounded-2xl p-3.5 mb-6 border border-white/10">
         <div className="relative">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search members by name, email, or member code (e.g. GYM-1001)..."
-            className="w-full bg-[#090A0F] border border-[#222634] rounded-lg px-4 py-3 pl-10 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981]"
+            className="w-full bg-[#0B0D14] border border-white/10 rounded-xl px-4 py-3 pl-11 text-slate-100 text-sm outline-none focus:border-emerald-500 transition-all font-sans"
           />
           <svg
-            className="w-5 h-5 absolute left-3 top-3.5 text-[#9CA3AF]"
+            className="w-5 h-5 absolute left-3.5 top-3 text-slate-400"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -219,69 +223,72 @@ export default function AdminMembersPage() {
       </div>
 
       {error && (
-        <div className="bg-[#EF4444]/10 border border-[#EF4444] text-[#EF4444] p-4 rounded-lg mb-6 text-sm">
-          {error}
+        <div className="bg-rose-500/10 border border-rose-500/30 text-rose-300 p-4 rounded-2xl mb-6 text-xs flex items-center gap-2">
+          <span>⚠️ {error}</span>
         </div>
       )}
 
       {/* Members Directory Table */}
       {loading ? (
-        <div className="text-[#9CA3AF] py-16 text-center">Loading member directory...</div>
+        <div className="flex items-center justify-center py-24 text-slate-400 gap-3">
+          <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-sm font-medium">Loading member directory...</span>
+        </div>
       ) : members.length === 0 ? (
-        <div className="bg-[#12141C] border border-[#222634] rounded-xl p-12 text-center text-[#9CA3AF]">
+        <div className="glass-panel rounded-3xl p-12 text-center text-slate-400 text-xs border border-white/10">
           {searchQuery
             ? `No members matching "${searchQuery}".`
             : "No registered members found. Click '+ Register New Member' to get started."}
         </div>
       ) : (
-        <div className="bg-[#12141C] border border-[#222634] rounded-xl overflow-hidden shadow-xl">
+        <div className="glass-panel rounded-3xl overflow-hidden shadow-2xl border border-white/10">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-sm">
+            <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-[#1A1D29] border-b border-[#222634] text-[#9CA3AF] font-semibold">
-                  <th className="py-3.5 px-6">Member Code</th>
-                  <th className="py-3.5 px-6">Full Name</th>
-                  <th className="py-3.5 px-6">Email Address</th>
-                  <th className="py-3.5 px-6">Phone Number</th>
-                  <th className="py-3.5 px-6">Subscription Status</th>
-                  <th className="py-3.5 px-6">Joined Date</th>
-                  <th className="py-3.5 px-6 text-right">Actions</th>
+                <tr className="bg-[#0B0D14] border-b border-white/10 text-slate-400 font-bold uppercase tracking-wider text-[11px]">
+                  <th className="py-4 px-6">Member Code</th>
+                  <th className="py-4 px-6">Full Name</th>
+                  <th className="py-4 px-6">Email Address</th>
+                  <th className="py-4 px-6">Phone Number</th>
+                  <th className="py-4 px-6">Subscription Status</th>
+                  <th className="py-4 px-6">Joined Date</th>
+                  <th className="py-4 px-6 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#222634]">
+              <tbody className="divide-y divide-white/5">
                 {members.map((member) => (
                   <tr
                     key={member.id}
-                    className="hover:bg-[#1A1D29]/50 transition-colors"
+                    className="hover:bg-white/5 transition-colors"
                   >
-                    <td className="py-4 px-6 font-mono text-[#10B981] font-medium">
+                    <td className="py-4 px-6 font-mono text-emerald-400 font-bold tabular-nums">
                       {member.memberCode || "N/A"}
                     </td>
-                    <td className="py-4 px-6 font-semibold text-[#F3F4F6]">
+                    <td className="py-4 px-6 font-extrabold text-white">
                       {member.name}
                     </td>
-                    <td className="py-4 px-6 text-[#9CA3AF]">{member.email}</td>
-                    <td className="py-4 px-6 text-[#9CA3AF] font-mono">
+                    <td className="py-4 px-6 text-slate-300">{member.email}</td>
+                    <td className="py-4 px-6 text-slate-400 font-mono tabular-nums">
                       {member.phoneNumber || "-"}
                     </td>
                     <td className="py-4 px-6">
                       {member.activeSubscription ? (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold font-mono bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                           Active: {member.activeSubscription.planName}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold font-mono bg-[#222634] text-[#9CA3AF] border border-[#222634]">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/5 text-slate-400 border border-white/10">
                           No Active Plan
                         </span>
                       )}
                     </td>
-                    <td className="py-4 px-6 text-[#9CA3AF] font-mono">
+                    <td className="py-4 px-6 text-slate-400 font-mono tabular-nums">
                       {formatDate(member.createdAt)}
                     </td>
                     <td className="py-4 px-6 text-right">
                       <button
                         onClick={() => openProfileModal(member.id)}
-                        className="bg-[#1A1D29] hover:bg-[#222634] text-[#F3F4F6] px-3 py-1.5 rounded-lg text-xs font-medium border border-[#222634] transition-colors"
+                        className="bg-white/5 hover:bg-white/10 text-slate-200 border border-white/10 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-[0.98]"
                       >
                         View Profile
                       </button>
@@ -296,22 +303,22 @@ export default function AdminMembersPage() {
 
       {/* Register New Member Modal */}
       {isRegisterModalOpen && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-          <div className="bg-[#12141C] border border-[#222634] w-full max-w-md rounded-xl p-6 shadow-2xl">
-            <h2 className="text-2xl font-bold text-[#F3F4F6] mb-2">Register New Member</h2>
-            <p className="text-xs text-[#9CA3AF] mb-4">
-              System will automatically generate a unique member code (e.g. GYM-1001).
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <div className="glass-panel border border-white/10 w-full max-w-md rounded-3xl p-6 shadow-2xl">
+            <h2 className="text-xl font-black text-white mb-1">Register New Member</h2>
+            <p className="text-xs text-slate-400 mb-6">
+              System will automatically generate a unique member code (<code className="font-mono text-emerald-400">GYM-1001</code>).
             </p>
 
             {registerError && (
-              <div className="bg-[#EF4444]/10 border border-[#EF4444] text-[#EF4444] text-sm p-3 rounded-lg mb-4">
+              <div className="bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs p-3.5 rounded-2xl mb-4">
                 {registerError}
               </div>
             )}
 
             <form onSubmit={handleRegisterSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
+                <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                   Full Name *
                 </label>
                 <input
@@ -319,13 +326,13 @@ export default function AdminMembersPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Alex Morgan"
-                  className="w-full bg-[#090A0F] border border-[#222634] rounded-lg p-2.5 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981]"
+                  className="w-full bg-[#0B0D14] border border-white/10 focus:border-emerald-500 rounded-xl p-3 text-slate-100 text-sm outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
+                <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                   Email Address *
                 </label>
                 <input
@@ -333,13 +340,13 @@ export default function AdminMembersPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="alex.morgan@example.com"
-                  className="w-full bg-[#090A0F] border border-[#222634] rounded-lg p-2.5 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981]"
+                  className="w-full bg-[#0B0D14] border border-white/10 focus:border-emerald-500 rounded-xl p-3 text-slate-100 text-sm outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
+                <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                   Phone Number
                 </label>
                 <input
@@ -347,22 +354,22 @@ export default function AdminMembersPage() {
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   placeholder="+1 (555) 019-2834"
-                  className="w-full bg-[#090A0F] border border-[#222634] rounded-lg p-2.5 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981] font-mono"
+                  className="w-full bg-[#0B0D14] border border-white/10 focus:border-emerald-500 rounded-xl p-3 text-slate-100 text-sm outline-none font-mono tabular-nums"
                 />
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-[#222634] mt-6">
+              <div className="flex gap-3 pt-4 border-t border-white/10 mt-6">
                 <button
                   type="button"
                   onClick={() => setIsRegisterModalOpen(false)}
-                  className="flex-1 bg-[#1A1D29] hover:bg-[#222634] text-[#F3F4F6] py-2 rounded-lg text-sm font-medium transition-colors"
+                  className="flex-1 bg-white/5 hover:bg-white/10 text-slate-300 py-2.5 rounded-xl text-xs font-bold transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={registerSubmitting}
-                  className="flex-1 bg-[#10B981] hover:bg-[#059669] text-white py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                  className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black py-2.5 rounded-xl text-xs font-black shadow-lg transition-all disabled:opacity-50"
                 >
                   {registerSubmitting ? "Registering..." : "Register Member"}
                 </button>
@@ -374,34 +381,37 @@ export default function AdminMembersPage() {
 
       {/* Member Profile Modal */}
       {selectedMemberId && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-          <div className="bg-[#12141C] border border-[#222634] w-full max-w-2xl rounded-xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <div className="glass-panel border border-white/10 w-full max-w-2xl rounded-3xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button
               onClick={closeProfileModal}
-              className="absolute top-4 right-4 text-[#9CA3AF] hover:text-[#F3F4F6] text-lg font-bold"
+              className="absolute top-4 right-4 text-slate-400 hover:text-white text-base font-bold p-1"
             >
               ✕
             </button>
 
             {profileLoading ? (
-              <div className="text-[#9CA3AF] py-12 text-center">Loading member profile...</div>
+              <div className="flex items-center justify-center py-16 text-slate-400 gap-3">
+                <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-xs font-medium">Loading member profile...</span>
+              </div>
             ) : profileError ? (
-              <div className="bg-[#EF4444]/10 border border-[#EF4444] text-[#EF4444] p-4 rounded-lg my-4 text-sm">
+              <div className="bg-rose-500/10 border border-rose-500/30 text-rose-300 p-4 rounded-2xl my-4 text-xs">
                 {profileError}
               </div>
             ) : profileData ? (
               <div>
                 {/* Profile Header */}
-                <div className="flex justify-between items-start mb-6 pb-4 border-b border-[#222634]">
+                <div className="flex justify-between items-start mb-6 pb-4 border-b border-white/10">
                   <div>
-                    <h2 className="text-2xl font-bold text-[#F3F4F6]">{profileData.name}</h2>
-                    <p className="text-[#9CA3AF] text-sm mt-0.5">{profileData.email}</p>
+                    <h2 className="text-2xl font-black text-white tracking-tight">{profileData.name}</h2>
+                    <p className="text-slate-400 text-xs mt-0.5">{profileData.email}</p>
                   </div>
                   <div className="text-right">
-                    <span className="font-mono text-lg font-bold text-[#10B981] block">
+                    <span className="font-mono text-lg font-black text-emerald-400 block tabular-nums">
                       {profileData.memberCode || "N/A"}
                     </span>
-                    <span className="text-xs text-[#9CA3AF]">
+                    <span className="text-[11px] text-slate-400 font-mono">
                       Joined {formatDate(profileData.createdAt)}
                     </span>
                   </div>
@@ -409,41 +419,41 @@ export default function AdminMembersPage() {
 
                 {/* Contact & Status Overview */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  <div className="bg-[#090A0F] border border-[#222634] rounded-lg p-4">
-                    <h3 className="text-xs font-semibold text-[#9CA3AF] uppercase tracking-wider mb-2">
+                  <div className="bg-[#0B0D14] border border-white/10 rounded-2xl p-4">
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">
                       Contact Information
                     </h3>
-                    <p className="text-sm text-[#F3F4F6]">
-                      <span className="text-[#9CA3AF]">Phone:</span>{" "}
-                      <span className="font-mono">{profileData.phoneNumber || "Not provided"}</span>
+                    <p className="text-xs text-white">
+                      <span className="text-slate-400">Phone:</span>{" "}
+                      <span className="font-mono tabular-nums">{profileData.phoneNumber || "Not provided"}</span>
                     </p>
-                    <p className="text-sm text-[#F3F4F6] mt-1">
-                      <span className="text-[#9CA3AF]">Role:</span>{" "}
-                      <span className="capitalize">{profileData.role}</span>
+                    <p className="text-xs text-white mt-1">
+                      <span className="text-slate-400">Role:</span>{" "}
+                      <span className="capitalize font-bold">{profileData.role}</span>
                     </p>
                   </div>
 
-                  <div className="bg-[#090A0F] border border-[#222634] rounded-lg p-4">
-                    <h3 className="text-xs font-semibold text-[#9CA3AF] uppercase tracking-wider mb-2">
+                  <div className="bg-[#0B0D14] border border-white/10 rounded-2xl p-4">
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">
                       Active Subscription Status
                     </h3>
                     {profileData.activeSubscription ? (
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-base font-bold text-[#F3F4F6]">
+                          <span className="text-sm font-extrabold text-white">
                             {profileData.activeSubscription.planName}
                           </span>
-                          <span className="px-2 py-0.5 rounded-full text-xs font-semibold font-mono bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                             Active
                           </span>
                         </div>
-                        <p className="text-xs text-[#9CA3AF] font-mono">
+                        <p className="text-[11px] text-slate-400 font-mono tabular-nums">
                           Expires: {formatDate(profileData.activeSubscription.endDate)}
                         </p>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold font-mono bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/30">
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-500/20 text-rose-400 border border-rose-500/30">
                           No Active Subscription
                         </span>
                       </div>
@@ -453,9 +463,9 @@ export default function AdminMembersPage() {
 
                 {/* Subscriptions History */}
                 <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-[#F3F4F6] mb-3">Subscription History</h3>
+                  <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Subscription History</h3>
                   {!profileData.subscriptions || profileData.subscriptions.length === 0 ? (
-                    <p className="text-xs text-[#9CA3AF] bg-[#090A0F] border border-[#222634] rounded-lg p-3">
+                    <p className="text-xs text-slate-400 bg-[#0B0D14] border border-white/10 rounded-2xl p-3.5">
                       No subscription history recorded.
                     </p>
                   ) : (
@@ -463,21 +473,21 @@ export default function AdminMembersPage() {
                       {profileData.subscriptions.map((sub) => (
                         <div
                           key={sub.id}
-                          className="bg-[#090A0F] border border-[#222634] rounded-lg p-3 flex justify-between items-center text-xs"
+                          className="bg-[#0B0D14] border border-white/10 rounded-2xl p-3.5 flex justify-between items-center text-xs"
                         >
                           <div>
-                            <span className="font-semibold text-[#F3F4F6]">{sub.planName}</span>
-                            <div className="text-[#9CA3AF] font-mono text-[11px] mt-0.5">
+                            <span className="font-extrabold text-white">{sub.planName}</span>
+                            <div className="text-slate-400 font-mono text-[11px] mt-0.5 tabular-nums">
                               {formatDate(sub.startDate)} - {formatDate(sub.endDate)}
                             </div>
                           </div>
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[11px] font-semibold font-mono ${
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
                               sub.status === "active"
-                                ? "bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30"
+                                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                                 : sub.status === "expired"
-                                ? "bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/30"
-                                : "bg-[#222634] text-[#9CA3AF]"
+                                ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                                : "bg-white/5 text-slate-400"
                             }`}
                           >
                             {sub.status}
@@ -490,9 +500,9 @@ export default function AdminMembersPage() {
 
                 {/* Check-ins History */}
                 <div>
-                  <h3 className="text-sm font-semibold text-[#F3F4F6] mb-3">Recent Check-Ins</h3>
+                  <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Recent Check-Ins</h3>
                   {!profileData.checkIns || profileData.checkIns.length === 0 ? (
-                    <p className="text-xs text-[#9CA3AF] bg-[#090A0F] border border-[#222634] rounded-lg p-3">
+                    <p className="text-xs text-slate-400 bg-[#0B0D14] border border-white/10 rounded-2xl p-3.5">
                       No check-in history recorded.
                     </p>
                   ) : (
@@ -500,23 +510,23 @@ export default function AdminMembersPage() {
                       {profileData.checkIns.map((ci) => (
                         <div
                           key={ci.id}
-                          className="bg-[#090A0F] border border-[#222634] rounded-lg p-3 flex justify-between items-center text-xs"
+                          className="bg-[#0B0D14] border border-white/10 rounded-2xl p-3.5 flex justify-between items-center text-xs"
                         >
                           <div>
-                            <span className="font-mono text-[#F3F4F6]">
+                            <span className="font-mono text-white tabular-nums">
                               {formatDate(ci.checkedInAt)}
                             </span>
                             {ci.overrideNotes && (
-                              <p className="text-[#9CA3AF] text-[11px] mt-0.5">
+                              <p className="text-purple-300 text-[11px] mt-0.5">
                                 Note: {ci.overrideNotes}
                               </p>
                             )}
                           </div>
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[11px] font-semibold font-mono ${
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
                               ci.status === "granted"
-                                ? "bg-[#10B981]/15 text-[#10B981]"
-                                : "bg-[#EF4444]/15 text-[#EF4444]"
+                                ? "bg-emerald-500/20 text-emerald-400"
+                                : "bg-rose-500/20 text-rose-400"
                             }`}
                           >
                             {ci.status}
