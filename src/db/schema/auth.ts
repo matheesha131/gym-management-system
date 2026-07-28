@@ -8,6 +8,7 @@ export const user = mysqlTable("user", {
   image: text("image"),
   role: varchar("role", { length: 50 }).default("member").notNull(), // admin, staff, member
   memberCode: varchar("member_code", { length: 50 }),
+  phoneNumber: varchar("phone_number", { length: 50 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
