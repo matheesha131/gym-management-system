@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { AdminNav } from "../components/AdminNav";
 
 interface MemberInfo {
   id: string;
@@ -210,49 +211,11 @@ export default function AdminCheckInTerminalPage() {
   return (
     <div className="min-h-screen p-6 max-w-7xl mx-auto bg-[#090A0F] text-[#F3F4F6] flex flex-col font-sans">
       {/* Top Admin Navigation Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 mb-6 border-b border-[#222634]">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <span className="bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30 text-xs px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider">
-              Terminal Mode
-            </span>
-            <h1 className="text-2xl font-extrabold tracking-tight text-[#F3F4F6]">
-              Check-in Terminal & Entry Verification
-            </h1>
-          </div>
-          <p className="text-[#9CA3AF] text-sm">
-            Scan member QR code or ID badge for real-time eligibility evaluation
-          </p>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 bg-[#12141C] p-1.5 rounded-xl border border-[#222634]">
-          <Link
-            href="/admin/terminal"
-            className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-[#10B981] text-white shadow-sm"
-          >
-            Terminal
-          </Link>
-          <Link
-            href="/admin/members"
-            className="px-3.5 py-1.5 text-xs font-semibold rounded-lg text-[#9CA3AF] hover:text-[#F3F4F6] transition-colors"
-          >
-            Members
-          </Link>
-          <Link
-            href="/admin/payments"
-            className="px-3.5 py-1.5 text-xs font-semibold rounded-lg text-[#9CA3AF] hover:text-[#F3F4F6] transition-colors"
-          >
-            Payments
-          </Link>
-          <Link
-            href="/admin/plans"
-            className="px-3.5 py-1.5 text-xs font-semibold rounded-lg text-[#9CA3AF] hover:text-[#F3F4F6] transition-colors"
-          >
-            Plans
-          </Link>
-        </div>
-      </div>
+      <AdminNav
+        title="Check-in Terminal & Entry Verification"
+        subtitle="Scan member QR code or ID badge for real-time eligibility evaluation"
+        badgeText="Terminal Mode"
+      />
 
       {/* Main Kiosk & Scan Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1">

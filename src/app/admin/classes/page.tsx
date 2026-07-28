@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { AdminNav } from "../components/AdminNav";
 
 interface Trainer {
   id: string;
@@ -201,50 +202,10 @@ export default function AdminClassesPage() {
   return (
     <div className="min-h-screen p-8 max-w-7xl mx-auto bg-[#090A0F] text-[#F3F4F6] font-sans">
       {/* Top Admin Navigation Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 mb-8 border-b border-[#222634]">
-        <div>
-          <h1 className="text-3xl font-extrabold text-[#10B981] tracking-tight">
-            Gym Class Scheduling & Operations
-          </h1>
-          <p className="text-[#9CA3AF] text-sm mt-1">
-            Create class templates, assign trainers, set capacities, and manage session schedules
-          </p>
-        </div>
-
-        {/* Admin Navigation Tabs */}
-        <div className="flex items-center gap-2 bg-[#12141C] p-1.5 rounded-xl border border-[#222634]">
-          <Link
-            href="/admin/terminal"
-            className="px-3.5 py-1.5 text-xs font-semibold rounded-lg text-[#9CA3AF] hover:text-[#F3F4F6] transition-colors"
-          >
-            Terminal
-          </Link>
-          <Link
-            href="/admin/members"
-            className="px-3.5 py-1.5 text-xs font-semibold rounded-lg text-[#9CA3AF] hover:text-[#F3F4F6] transition-colors"
-          >
-            Members
-          </Link>
-          <Link
-            href="/admin/payments"
-            className="px-3.5 py-1.5 text-xs font-semibold rounded-lg text-[#9CA3AF] hover:text-[#F3F4F6] transition-colors"
-          >
-            Payments
-          </Link>
-          <Link
-            href="/admin/plans"
-            className="px-3.5 py-1.5 text-xs font-semibold rounded-lg text-[#9CA3AF] hover:text-[#F3F4F6] transition-colors"
-          >
-            Plans
-          </Link>
-          <Link
-            href="/admin/classes"
-            className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-[#10B981] text-white shadow-sm"
-          >
-            Classes
-          </Link>
-        </div>
-      </div>
+      <AdminNav
+        title="Gym Class Scheduling & Operations"
+        subtitle="Create class templates, assign trainers, set capacities, and manage session schedules"
+      />
 
       {/* Global Error Banner */}
       {error && (
