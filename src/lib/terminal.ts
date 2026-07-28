@@ -82,7 +82,7 @@ export function validateCheckInInput(data: any): {
 
 export interface OverrideInput {
   memberId: string;
-  overrideNotes?: string;
+  overrideNotes: string;
   scannedCode?: string;
 }
 
@@ -99,11 +99,15 @@ export function validateOverrideInput(data: any): {
     return { valid: false, error: "Member ID is required for staff override" };
   }
 
+  if (!data.overrideNotes || typeof data.overrideNotes !== "string" || !data.overrideNotes.trim()) {
+    return { valid: false, error: "Audit notes are required for staff override" };
+  }
+
   return {
     valid: true,
     data: {
       memberId: data.memberId.trim(),
-      overrideNotes: data.overrideNotes ? String(data.overrideNotes).trim() : undefined,
+      overrideNotes: data.overrideNotes.trim(),
       scannedCode: data.scannedCode ? String(data.scannedCode).trim() : undefined,
     },
   };

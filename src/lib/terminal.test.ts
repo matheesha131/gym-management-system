@@ -96,9 +96,11 @@ describe("Check-in Terminal & Entry Verification Unit Tests", () => {
       expect(res.data?.overrideNotes).toBe("Forgot keycard");
     });
 
-    test("rejects missing memberId", () => {
+    test("rejects missing memberId or missing override notes", () => {
       expect(validateOverrideInput({ overrideNotes: "test" }).valid).toBe(false);
       expect(validateOverrideInput({ memberId: "" }).valid).toBe(false);
+      expect(validateOverrideInput({ memberId: "user-123", overrideNotes: "" }).valid).toBe(false);
+      expect(validateOverrideInput({ memberId: "user-123" }).valid).toBe(false);
     });
   });
 });
