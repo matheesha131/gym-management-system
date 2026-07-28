@@ -106,7 +106,7 @@ export default function MemberPortalPage() {
       {/* Top Header Navigation */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 pb-6 border-b border-[#222634]">
         <div>
-          <h1 className="text-3xl font-bold text-[#10B981]">Member Portal</h1>
+          <h1 className="text-3xl font-bold text-[#F3F4F6]">Member Portal</h1>
           {data?.user && (
             <div className="flex items-center gap-2 mt-1">
               <span className="text-[#9CA3AF] text-sm">{data.user.name}</span>

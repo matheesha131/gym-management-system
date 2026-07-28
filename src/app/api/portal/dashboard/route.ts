@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { user } from "@/db/schema/auth";
 import { subscription, membershipPlan, checkIn } from "@/db/schema/domain";
-import { calculateRemainingDays } from "@/lib/portal";
+import { calculateRemainingDays, determineSubscriptionStatus } from "@/lib/portal";
 import { eq, desc } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
@@ -55,9 +55,10 @@ export async function GET(request: NextRequest) {
     const now = new Date();
 
     // Find active non-expired subscription
-    const rawActiveSub = userSubscriptions.find(
-      (s) => s.status === "active" && new Date(s.endDate) > now
-    );
+    const rawActiveSub = userSubscriptions.find((s) => {
+      const statusInfo = determineSubscriptionStatus(s, now);
+      return statusInfo.isActive;
+    });
 
     const activeSubscription = rawActiveSub
       ? {
