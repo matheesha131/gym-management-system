@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
     let isOverride = false;
     let overrideNotes: string | null = null;
     let scannedCode: string | null = null;
+    let matchedSub: any = null;
 
     if (body.isOverride) {
       const val = validateOverrideInput(body);
@@ -117,24 +118,25 @@ export async function POST(request: NextRequest) {
 
       const evalResult = evaluateEntryEligibility(userSubs, now);
       finalStatus = evalResult.status;
+      matchedSub = evalResult.subscription;
+    } else {
+      // If override, still fetch active or latest subscription info for display
+      const userSubs = await db
+        .select({
+          id: subscription.id,
+          planName: membershipPlan.name,
+          startDate: subscription.startDate,
+          endDate: subscription.endDate,
+          status: subscription.status,
+        })
+        .from(subscription)
+        .innerJoin(membershipPlan, eq(subscription.planId, membershipPlan.id))
+        .where(eq(subscription.memberId, targetMember.id))
+        .orderBy(desc(subscription.createdAt));
+
+      const evalResult = evaluateEntryEligibility(userSubs, now);
+      matchedSub = evalResult.subscription;
     }
-
-    // Fetch subscription detail for result card
-    const userSubsForInfo = await db
-      .select({
-        id: subscription.id,
-        planName: membershipPlan.name,
-        startDate: subscription.startDate,
-        endDate: subscription.endDate,
-        status: subscription.status,
-      })
-      .from(subscription)
-      .innerJoin(membershipPlan, eq(subscription.planId, membershipPlan.id))
-      .where(eq(subscription.memberId, targetMember.id))
-      .orderBy(desc(subscription.endDate));
-
-    const evalRes = evaluateEntryEligibility(userSubsForInfo, now);
-    const matchedSub = evalRes.subscription;
 
     const newCheckInId = crypto.randomUUID();
 
