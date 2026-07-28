@@ -7,6 +7,7 @@ export const user = mysqlTable("user", {
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
   role: varchar("role", { length: 50 }).default("member").notNull(), // admin, staff, member
+  memberCode: varchar("member_code", { length: 50 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

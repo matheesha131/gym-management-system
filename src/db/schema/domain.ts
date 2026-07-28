@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, text, timestamp, decimal, int } from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, text, timestamp, decimal, int, boolean } from "drizzle-orm/mysql-core";
 import { user } from "./auth";
 
 // Membership Plans (Monthly, Annual, Day Pass, etc.)
@@ -8,6 +8,7 @@ export const membershipPlan = mysqlTable("membership_plan", {
   description: text("description"),
   durationDays: int("duration_days").notNull(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
