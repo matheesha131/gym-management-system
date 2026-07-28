@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { classSchedule, classBooking } from "@/db/schema/domain";
+import { gymClass, classSchedule, classBooking } from "@/db/schema/domain";
 import { canCancelBooking } from "@/lib/classes";
 import { eq, and, sql } from "drizzle-orm";
 
@@ -49,15 +49,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Fetch schedule
+    // Fetch schedule with class capacity
     const schedules = await db
       .select({
         id: classSchedule.id,
-        capacity: classSchedule.currentBookings,
+        capacity: gymClass.capacity,
         currentBookings: classSchedule.currentBookings,
         startTime: classSchedule.startTime,
       })
       .from(classSchedule)
+      .innerJoin(gymClass, eq(classSchedule.classId, gymClass.id))
       .where(eq(classSchedule.id, booking.scheduleId))
       .limit(1);
 

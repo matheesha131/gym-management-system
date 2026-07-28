@@ -72,8 +72,21 @@ export async function POST(request: NextRequest) {
 
     const newBookingId = crypto.randomUUID();
 
-    // Execute transaction to book slot and increment current bookings count
+    // Execute transaction to book slot and increment current bookings count atomically
+    let updateSuccess = false;
     await db.transaction(async (tx) => {
+      const updateResult = await tx
+        .update(classSchedule)
+        .set({
+          currentBookings: sql`${classSchedule.currentBookings} + 1`,
+        })
+        .where(
+          and(
+            eq(classSchedule.id, scheduleId),
+            sql`${classSchedule.currentBookings} < ${schedule.capacity}`
+          )
+        );
+
       await tx.insert(classBooking).values({
         id: newBookingId,
         scheduleId: scheduleId,
@@ -82,13 +95,12 @@ export async function POST(request: NextRequest) {
         createdAt: now,
       });
 
-      await tx
-        .update(classSchedule)
-        .set({
-          currentBookings: sql`${classSchedule.currentBookings} + 1`,
-        })
-        .where(eq(classSchedule.id, scheduleId));
+      updateSuccess = true;
     });
+
+    if (!updateSuccess) {
+      return NextResponse.json({ error: "Class session is fully booked" }, { status: 400 });
+    }
 
     return NextResponse.json(
       {
