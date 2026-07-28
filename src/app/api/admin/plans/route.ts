@@ -15,6 +15,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    if (!isAuthorizedForPlanMutation(session.user.role)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const plans = await db
       .select()
       .from(membershipPlan)

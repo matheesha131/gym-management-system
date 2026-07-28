@@ -182,7 +182,7 @@ export default function AdminPlansPage() {
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-xl font-bold text-[#F3F4F6]">{plan.name}</h3>
                   <span
-                    className={`text-xs px-2.5 py-1 rounded-full font-semibold ${
+                    className={`text-xs px-2.5 py-1 rounded-full font-semibold font-mono ${
                       plan.isActive
                         ? "bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30"
                         : "bg-[#222634] text-[#9CA3AF] border border-[#222634]"
@@ -195,8 +195,8 @@ export default function AdminPlansPage() {
                   {plan.description || "No description provided."}
                 </p>
                 <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-3xl font-extrabold text-[#F3F4F6]">${plan.price}</span>
-                  <span className="text-[#9CA3AF] text-sm">/ {plan.durationDays} days</span>
+                  <span className="text-3xl font-extrabold font-mono text-[#F3F4F6]">${plan.price}</span>
+                  <span className="text-[#9CA3AF] text-sm font-mono">/ {plan.durationDays} days</span>
                 </div>
               </div>
 
@@ -275,7 +275,7 @@ export default function AdminPlansPage() {
                     value={durationDays}
                     onChange={(e) => setDurationDays(Number(e.target.value))}
                     min={1}
-                    className="w-full bg-[#090A0F] border border-[#222634] rounded-lg p-2.5 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981]"
+                    className="w-full bg-[#090A0F] border border-[#222634] rounded-lg p-2.5 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981] font-mono"
                     required
                   />
                 </div>
@@ -290,7 +290,7 @@ export default function AdminPlansPage() {
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                     min={0}
-                    className="w-full bg-[#090A0F] border border-[#222634] rounded-lg p-2.5 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981]"
+                    className="w-full bg-[#090A0F] border border-[#222634] rounded-lg p-2.5 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981] font-mono"
                     required
                   />
                 </div>
