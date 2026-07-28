@@ -141,32 +141,32 @@ export default function AdminPlansPage() {
   };
 
   return (
-    <div className="min-h-screen p-8 max-w-7xl mx-auto">
+    <div className="min-h-screen p-8 max-w-7xl mx-auto bg-[#090A0F] text-[#F3F4F6]">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-emerald-400">Membership Plans</h1>
-          <p className="text-slate-400 text-sm mt-1">
+          <h1 className="text-3xl font-bold text-[#10B981]">Membership Plans</h1>
+          <p className="text-[#9CA3AF] text-sm mt-1">
             Manage gym membership tiers, pricing, and availability
           </p>
         </div>
         <button
           onClick={openCreateModal}
-          className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-medium shadow-md transition-colors"
+          className="bg-[#10B981] hover:bg-[#059669] text-white px-4 py-2 rounded-lg font-medium shadow-md transition-colors"
         >
           + Create New Plan
         </button>
       </div>
 
       {error && (
-        <div className="bg-red-900/30 border border-red-500 text-red-300 p-4 rounded-lg mb-6">
+        <div className="bg-[#EF4444]/10 border border-[#EF4444] text-[#EF4444] p-4 rounded-lg mb-6">
           {error}
         </div>
       )}
 
       {loading ? (
-        <div className="text-slate-400 py-12 text-center">Loading plans...</div>
+        <div className="text-[#9CA3AF] py-12 text-center">Loading plans...</div>
       ) : plans.length === 0 ? (
-        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-12 text-center text-slate-400">
+        <div className="bg-[#12141C] border border-[#222634] rounded-xl p-12 text-center text-[#9CA3AF]">
           No membership plans created yet. Click "+ Create New Plan" to get started.
         </div>
       ) : (
@@ -174,36 +174,36 @@ export default function AdminPlansPage() {
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`bg-slate-900 border ${
-                plan.isActive ? "border-slate-800" : "border-slate-800/50 opacity-60"
+              className={`bg-[#12141C] border ${
+                plan.isActive ? "border-[#222634]" : "border-[#222634]/50 opacity-60"
               } rounded-xl p-6 flex flex-col justify-between shadow-lg relative`}
             >
               <div>
                 <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-xl font-bold text-slate-100">{plan.name}</h3>
+                  <h3 className="text-xl font-bold text-[#F3F4F6]">{plan.name}</h3>
                   <span
                     className={`text-xs px-2.5 py-1 rounded-full font-semibold ${
                       plan.isActive
-                        ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
-                        : "bg-slate-800 text-slate-400 border border-slate-700"
+                        ? "bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/30"
+                        : "bg-[#222634] text-[#9CA3AF] border border-[#222634]"
                     }`}
                   >
                     {plan.isActive ? "Active" : "Inactive"}
                   </span>
                 </div>
-                <p className="text-slate-400 text-sm mb-4 min-h-[40px]">
+                <p className="text-[#9CA3AF] text-sm mb-4 min-h-[40px]">
                   {plan.description || "No description provided."}
                 </p>
                 <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-3xl font-extrabold text-slate-100">${plan.price}</span>
-                  <span className="text-slate-400 text-sm">/ {plan.durationDays} days</span>
+                  <span className="text-3xl font-extrabold text-[#F3F4F6]">${plan.price}</span>
+                  <span className="text-[#9CA3AF] text-sm">/ {plan.durationDays} days</span>
                 </div>
               </div>
 
-              <div className="flex gap-2 mt-6 pt-4 border-t border-slate-800">
+              <div className="flex gap-2 mt-6 pt-4 border-t border-[#222634]">
                 <button
                   onClick={() => openEditModal(plan)}
-                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 py-2 rounded-lg text-sm font-medium transition-colors"
+                  className="flex-1 bg-[#1A1D29] hover:bg-[#222634] text-[#F3F4F6] py-2 rounded-lg text-sm font-medium transition-colors"
                 >
                   Edit Details
                 </button>
@@ -211,8 +211,8 @@ export default function AdminPlansPage() {
                   onClick={() => togglePlanActive(plan)}
                   className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
                     plan.isActive
-                      ? "bg-amber-950/40 hover:bg-amber-900/60 text-amber-300 border border-amber-800/50"
-                      : "bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-800/50"
+                      ? "bg-[#F59E0B]/10 hover:bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/30"
+                      : "bg-[#10B981]/10 hover:bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/30"
                   }`}
                 >
                   {plan.isActive ? "Deactivate" : "Activate"}
@@ -225,21 +225,21 @@ export default function AdminPlansPage() {
 
       {/* Create / Edit Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-xl p-6 shadow-2xl">
-            <h2 className="text-2xl font-bold text-slate-100 mb-4">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+          <div className="bg-[#12141C] border border-[#222634] w-full max-w-md rounded-xl p-6 shadow-2xl">
+            <h2 className="text-2xl font-bold text-[#F3F4F6] mb-4">
               {editingPlan ? "Edit Membership Plan" : "Create Membership Plan"}
             </h2>
 
             {formError && (
-              <div className="bg-red-900/30 border border-red-500 text-red-300 text-sm p-3 rounded-lg mb-4">
+              <div className="bg-[#EF4444]/10 border border-[#EF4444] text-[#EF4444] text-sm p-3 rounded-lg mb-4">
                 {formError}
               </div>
             )}
 
             <form onSubmit={handleSave} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
                   Plan Name *
                 </label>
                 <input
@@ -247,13 +247,13 @@ export default function AdminPlansPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Monthly All-Access"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-100 text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-[#090A0F] border border-[#222634] rounded-lg p-2.5 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981]"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
                   Description
                 </label>
                 <textarea
@@ -261,13 +261,13 @@ export default function AdminPlansPage() {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Describe the plan benefits..."
                   rows={3}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-100 text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-[#090A0F] border border-[#222634] rounded-lg p-2.5 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
                     Duration (Days) *
                   </label>
                   <input
@@ -275,13 +275,13 @@ export default function AdminPlansPage() {
                     value={durationDays}
                     onChange={(e) => setDurationDays(Number(e.target.value))}
                     min={1}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-100 text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-[#090A0F] border border-[#222634] rounded-lg p-2.5 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981]"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-[#9CA3AF] mb-1">
                     Price ($) *
                   </label>
                   <input
@@ -290,7 +290,7 @@ export default function AdminPlansPage() {
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                     min={0}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-100 text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-[#090A0F] border border-[#222634] rounded-lg p-2.5 text-[#F3F4F6] text-sm focus:outline-none focus:border-[#10B981]"
                     required
                   />
                 </div>
@@ -302,25 +302,25 @@ export default function AdminPlansPage() {
                   id="isActive"
                   checked={isActive}
                   onChange={(e) => setIsActive(e.target.checked)}
-                  className="w-4 h-4 rounded accent-emerald-500 bg-slate-950 border-slate-800"
+                  className="w-4 h-4 rounded accent-[#10B981] bg-[#090A0F] border-[#222634]"
                 />
-                <label htmlFor="isActive" className="text-sm font-medium text-slate-300 cursor-pointer">
+                <label htmlFor="isActive" className="text-sm font-medium text-[#F3F4F6] cursor-pointer">
                   Plan is active for purchase
                 </label>
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-slate-800 mt-6">
+              <div className="flex gap-3 pt-4 border-t border-[#222634] mt-6">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-lg text-sm font-medium transition-colors"
+                  className="flex-1 bg-[#1A1D29] hover:bg-[#222634] text-[#F3F4F6] py-2 rounded-lg text-sm font-medium transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                  className="flex-1 bg-[#10B981] hover:bg-[#059669] text-white py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                 >
                   {submitting ? "Saving..." : editingPlan ? "Update Plan" : "Create Plan"}
                 </button>

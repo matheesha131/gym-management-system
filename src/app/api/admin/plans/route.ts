@@ -5,8 +5,16 @@ import { membershipPlan } from "@/db/schema/domain";
 import { validatePlanInput, isAuthorizedForPlanMutation } from "@/lib/plans";
 import { desc } from "drizzle-orm";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const plans = await db
       .select()
       .from(membershipPlan)

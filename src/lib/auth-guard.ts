@@ -1,8 +1,8 @@
-export type UserRole = "admin" | "staff" | "member" | string;
+export type UserRole = "admin" | "staff" | "member";
 
 export interface SessionUser {
   id?: string;
-  role?: UserRole | null;
+  role?: UserRole | string | null;
   email?: string;
   name?: string;
 }

@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { membershipPlan } from "@/db/schema/domain";
-import { isAuthorizedForPlanMutation } from "@/lib/plans";
+import { isAuthorizedForPlanMutation, validatePlanUpdate } from "@/lib/plans";
 import { eq } from "drizzle-orm";
 
 export async function PATCH(
@@ -34,53 +34,14 @@ export async function PATCH(
       return NextResponse.json({ error: "Plan not found" }, { status: 404 });
     }
 
-    const updateData: Record<string, any> = {
-      updatedAt: new Date(),
-    };
-
-    if (body.name !== undefined) {
-      if (typeof body.name !== "string" || body.name.trim() === "") {
-        return NextResponse.json(
-          { error: "Name must be a non-empty string" },
-          { status: 400 }
-        );
-      }
-      updateData.name = body.name.trim();
-    }
-
-    if (body.description !== undefined) {
-      updateData.description = body.description ? String(body.description).trim() : null;
-    }
-
-    if (body.durationDays !== undefined) {
-      const durationDays = Number(body.durationDays);
-      if (isNaN(durationDays) || !Number.isInteger(durationDays) || durationDays <= 0) {
-        return NextResponse.json(
-          { error: "Duration (days) must be a positive integer" },
-          { status: 400 }
-        );
-      }
-      updateData.durationDays = durationDays;
-    }
-
-    if (body.price !== undefined) {
-      const priceNum = Number(body.price);
-      if (isNaN(priceNum) || priceNum < 0) {
-        return NextResponse.json(
-          { error: "Price must be a non-negative number" },
-          { status: 400 }
-        );
-      }
-      updateData.price = priceNum.toFixed(2);
-    }
-
-    if (body.isActive !== undefined) {
-      updateData.isActive = Boolean(body.isActive);
+    const validation = validatePlanUpdate(body);
+    if (!validation.valid || !validation.data) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
     await db
       .update(membershipPlan)
-      .set(updateData)
+      .set(validation.data)
       .where(eq(membershipPlan.id, id));
 
     const updated = await db
