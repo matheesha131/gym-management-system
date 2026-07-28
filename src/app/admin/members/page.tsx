@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 interface ActiveSubscription {
   id: string;
@@ -176,20 +177,48 @@ export default function AdminMembersPage() {
 
   return (
     <div className="min-h-screen p-8 max-w-7xl mx-auto bg-[#090A0F] text-[#F3F4F6]">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+      {/* Top Admin Navigation Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 mb-6 border-b border-[#222634]">
         <div>
           <h1 className="text-3xl font-bold text-[#10B981]">Member Directory</h1>
           <p className="text-[#9CA3AF] text-sm mt-1">
             Register new members, view profiles, and monitor subscription status
           </p>
         </div>
-        <button
-          onClick={openRegisterModal}
-          className="bg-[#10B981] hover:bg-[#059669] text-white px-4 py-2.5 rounded-lg font-medium shadow-md transition-colors flex items-center gap-2"
-        >
-          <span>+ Register New Member</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-[#12141C] p-1.5 rounded-xl border border-[#222634]">
+            <Link
+              href="/admin/terminal"
+              className="px-3.5 py-1.5 text-xs font-semibold rounded-lg text-[#9CA3AF] hover:text-[#F3F4F6] transition-colors"
+            >
+              Terminal
+            </Link>
+            <Link
+              href="/admin/members"
+              className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-[#10B981] text-white shadow-sm"
+            >
+              Members
+            </Link>
+            <Link
+              href="/admin/payments"
+              className="px-3.5 py-1.5 text-xs font-semibold rounded-lg text-[#9CA3AF] hover:text-[#F3F4F6] transition-colors"
+            >
+              Payments
+            </Link>
+            <Link
+              href="/admin/plans"
+              className="px-3.5 py-1.5 text-xs font-semibold rounded-lg text-[#9CA3AF] hover:text-[#F3F4F6] transition-colors"
+            >
+              Plans
+            </Link>
+          </div>
+          <button
+            onClick={openRegisterModal}
+            className="bg-[#10B981] hover:bg-[#059669] text-white px-4 py-2 rounded-lg font-medium shadow-md transition-colors flex items-center gap-2"
+          >
+            <span>+ Register New Member</span>
+          </button>
+        </div>
       </div>
 
       {/* Search & Filters */}
