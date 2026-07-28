@@ -77,7 +77,11 @@ export async function GET(
       .orderBy(desc(checkIn.checkedInAt))
       .limit(10);
 
-    const activeSub = subscriptions.find((s) => s.status === "active") || null;
+    const now = new Date();
+    const activeSub =
+      subscriptions.find(
+        (s) => s.status === "active" && new Date(s.endDate) > now
+      ) || null;
 
     return NextResponse.json({
       ...member,

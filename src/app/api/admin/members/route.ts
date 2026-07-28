@@ -59,9 +59,11 @@ export async function GET(request: NextRequest) {
       .where(eq(subscription.status, "active"));
 
     // Map active subscriptions to member records
+    const now = new Date();
     const subMap = new Map<string, (typeof activeSubs)[0]>();
     for (const sub of activeSubs) {
-      if (!subMap.has(sub.memberId)) {
+      const isNotExpired = new Date(sub.endDate) > now;
+      if (isNotExpired && !subMap.has(sub.memberId)) {
         subMap.set(sub.memberId, sub);
       }
     }
