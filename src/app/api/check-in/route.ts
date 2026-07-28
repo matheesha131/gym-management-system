@@ -119,8 +119,10 @@ export async function POST(request: NextRequest) {
       const evalResult = evaluateEntryEligibility(userSubs, now);
       finalStatus = evalResult.status;
       matchedSub = evalResult.subscription;
-    } else {
-      // If override, still fetch active or latest subscription info for display
+    }
+
+    // If override, fetch subscription info for display card if not fetched yet
+    if (isOverride && targetMember) {
       const userSubs = await db
         .select({
           id: subscription.id,

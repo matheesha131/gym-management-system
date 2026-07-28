@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { signOut } from "@/lib/auth-client";
 import { formatCheckInStatus } from "@/lib/portal";
 
@@ -117,12 +118,30 @@ export default function MemberPortalPage() {
             </div>
           )}
         </div>
-        <button
-          onClick={handleSignOut}
-          className="bg-[#1A1D29] hover:bg-[#222634] text-[#9CA3AF] hover:text-[#F3F4F6] px-4 py-2 rounded-lg text-sm font-medium border border-[#222634] transition-colors"
-        >
-          Sign Out
-        </button>
+
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-[#12141C] p-1.5 rounded-xl border border-[#222634]">
+            <Link
+              href="/portal"
+              className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-[#10B981] text-white shadow-sm"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/portal/classes"
+              className="px-4 py-1.5 text-xs font-semibold rounded-lg text-[#9CA3AF] hover:text-[#F3F4F6] transition-colors"
+            >
+              Classes & Booking
+            </Link>
+          </div>
+
+          <button
+            onClick={handleSignOut}
+            className="bg-[#1A1D29] hover:bg-[#222634] text-[#9CA3AF] hover:text-[#F3F4F6] px-4 py-2 rounded-lg text-sm font-medium border border-[#222634] transition-colors"
+          >
+            Sign Out
+          </button>
+        </div>
       </div>
 
       {error && (
