@@ -162,6 +162,13 @@ export async function POST(request: NextRequest) {
     }
 
     const plan = targetPlan[0];
+    if (!plan.isActive) {
+      return NextResponse.json(
+        { error: "Selected membership plan is inactive" },
+        { status: 400 }
+      );
+    }
+
     const finalAmount = validation.data.amount ?? plan.price;
 
     // Calculate subscription dates
@@ -171,68 +178,75 @@ export async function POST(request: NextRequest) {
       now
     );
 
-    // Check if member has an existing subscription
-    const existingSub = await db
-      .select()
-      .from(subscription)
-      .where(eq(subscription.memberId, memberId))
-      .orderBy(desc(subscription.createdAt))
-      .limit(1);
+    // Atomic transaction for subscription update/create and payment insert
+    const result = await db.transaction(async (tx) => {
+      // Check if member has an existing subscription
+      const existingSub = await tx
+        .select()
+        .from(subscription)
+        .where(eq(subscription.memberId, memberId))
+        .orderBy(desc(subscription.createdAt))
+        .limit(1);
 
-    let activeSubId: string;
+      let activeSubId: string;
 
-    if (existingSub.length > 0) {
-      activeSubId = existingSub[0].id;
-      await db
-        .update(subscription)
-        .set({
+      if (existingSub.length > 0) {
+        activeSubId = existingSub[0].id;
+        await tx
+          .update(subscription)
+          .set({
+            planId: plan.id,
+            startDate,
+            endDate,
+            status: "active",
+            updatedAt: now,
+          })
+          .where(eq(subscription.id, activeSubId));
+      } else {
+        activeSubId = crypto.randomUUID();
+        await tx.insert(subscription).values({
+          id: activeSubId,
+          memberId,
           planId: plan.id,
           startDate,
           endDate,
           status: "active",
+          createdAt: now,
           updatedAt: now,
-        })
-        .where(eq(subscription.id, activeSubId));
-    } else {
-      activeSubId = crypto.randomUUID();
-      await db.insert(subscription).values({
-        id: activeSubId,
+        });
+      }
+
+      // Generate unique receipt reference REC-YYYYMMDD-XXXX
+      const existingPayments = await tx
+        .select({ receiptRef: payment.receiptRef })
+        .from(payment)
+        .where(isNotNull(payment.receiptRef));
+
+      const existingRefs = existingPayments
+        .map((p) => p.receiptRef)
+        .filter((r): r is string => Boolean(r));
+
+      const receiptRef = generateReceiptRef(now, existingRefs);
+
+      const newPayment = {
+        id: crypto.randomUUID(),
         memberId,
-        planId: plan.id,
-        startDate,
-        endDate,
-        status: "active",
-        createdAt: now,
-        updatedAt: now,
-      });
-    }
+        subscriptionId: activeSubId,
+        amount: finalAmount,
+        paymentMethod,
+        receiptRef,
+        notes,
+        createdById: session.user.id || null,
+        status: "completed",
+        paidAt: now,
+      };
 
-    // Generate unique receipt reference REC-YYYYMMDD-XXXX
-    const existingPayments = await db
-      .select({ receiptRef: payment.receiptRef })
-      .from(payment)
-      .where(isNotNull(payment.receiptRef));
+      await tx.insert(payment).values(newPayment);
 
-    const existingRefs = existingPayments
-      .map((p) => p.receiptRef)
-      .filter((r): r is string => Boolean(r));
+      return { newPayment, activeSubId };
+    });
 
-    const receiptRef = generateReceiptRef(now, existingRefs);
-
-    const newPayment = {
-      id: crypto.randomUUID(),
-      memberId,
-      subscriptionId: activeSubId,
-      amount: finalAmount,
-      paymentMethod,
-      receiptRef,
-      notes,
-      createdById: session.user.id || null,
-      status: "completed",
-      paidAt: now,
-    };
-
-    await db.insert(payment).values(newPayment);
+    const { newPayment, activeSubId } = result;
 
     return NextResponse.json(
       {
