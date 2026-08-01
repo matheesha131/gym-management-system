@@ -11,8 +11,8 @@ export const schema = {
 const poolConnection = mysql.createPool({
   host: process.env.DATABASE_HOST || "localhost",
   port: Number(process.env.DATABASE_PORT) || 3306,
-  user: process.env.DATABASE_USER || "irwtn",
-  password: process.env.DATABASE_PASSWORD || "DeadReckoning@2023",
+  user: process.env.DATABASE_USER || "root",
+  password: process.env.DATABASE_PASSWORD || "radius",
   database: process.env.DATABASE_NAME || "gym_management",
   waitForConnections: true,
   connectionLimit: 10,
