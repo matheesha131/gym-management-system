@@ -1,8 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { user } from "@/db/schema/auth";
-import { subscription, membershipPlan, payment } from "@/db/schema/domain";
 import {
   validatePaymentInput,
   generateReceiptRef,
@@ -10,7 +8,7 @@ import {
   isAuthorizedForPaymentManagement,
   filterPayments,
 } from "@/lib/payments";
-import { eq, desc, isNotNull, like, and } from "drizzle-orm";
+import { RowDataPacket } from "mysql2";
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,46 +27,29 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const searchQuery = searchParams.get("q") || searchParams.get("search") || "";
 
-    // Fetch payments with joined member, plan, and createdBy staff details
-    const paymentsList = await db
-      .select({
-        id: payment.id,
-        receiptRef: payment.receiptRef,
-        amount: payment.amount,
-        paymentMethod: payment.paymentMethod,
-        status: payment.status,
-        notes: payment.notes,
-        paidAt: payment.paidAt,
-        memberId: payment.memberId,
-        memberName: user.name,
-        memberEmail: user.email,
-        memberCode: user.memberCode,
-        subscriptionId: payment.subscriptionId,
-        createdById: payment.createdById,
-      })
-      .from(payment)
-      .innerJoin(user, eq(payment.memberId, user.id))
-      .orderBy(desc(payment.paidAt));
+    const [paymentsList] = await db.query<RowDataPacket[]>(`
+      SELECT 
+        p.id, p.receipt_ref as receiptRef, p.amount, p.payment_method as paymentMethod, 
+        p.status, p.notes, p.paid_at as paidAt, p.member_id as memberId, 
+        u.name as memberName, u.email as memberEmail, u.member_code as memberCode, 
+        p.subscription_id as subscriptionId, p.created_by_id as createdById
+      FROM payment p
+      INNER JOIN user u ON p.member_id = u.id
+      ORDER BY p.paid_at DESC
+    `);
 
-    // Fetch subscriptions and plans to attach plan details
-    const subs = await db
-      .select({
-        id: subscription.id,
-        planName: membershipPlan.name,
-        planId: membershipPlan.id,
-      })
-      .from(subscription)
-      .innerJoin(membershipPlan, eq(subscription.planId, membershipPlan.id));
+    const [subs] = await db.query<RowDataPacket[]>(`
+      SELECT s.id, p.name as planName, p.id as planId
+      FROM subscription s
+      INNER JOIN membership_plan p ON s.plan_id = p.id
+    `);
 
     const subMap = new Map<string, { planId: string; planName: string }>();
     for (const sub of subs) {
       subMap.set(sub.id, { planId: sub.planId, planName: sub.planName });
     }
 
-    // Fetch staff user names
-    const staffUsers = await db
-      .select({ id: user.id, name: user.name })
-      .from(user);
+    const [staffUsers] = await db.query<RowDataPacket[]>(`SELECT id, name FROM user`);
     const staffMap = new Map<string, string>();
     for (const s of staffUsers) {
       staffMap.set(s.id, s.name);
@@ -133,12 +114,10 @@ export async function POST(request: NextRequest) {
 
     const { memberId, planId, paymentMethod, notes } = validation.data;
 
-    // Verify member exists
-    const targetMember = await db
-      .select()
-      .from(user)
-      .where(eq(user.id, memberId))
-      .limit(1);
+    const [targetMember] = await db.query<RowDataPacket[]>(
+      `SELECT id FROM user WHERE id = ? LIMIT 1`,
+      [memberId]
+    );
 
     if (targetMember.length === 0) {
       return NextResponse.json(
@@ -147,12 +126,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify plan exists
-    const targetPlan = await db
-      .select()
-      .from(membershipPlan)
-      .where(eq(membershipPlan.id, planId))
-      .limit(1);
+    const [targetPlan] = await db.query<RowDataPacket[]>(
+      `SELECT id, name, duration_days as durationDays, price, is_active as isActive FROM membership_plan WHERE id = ? LIMIT 1`,
+      [planId]
+    );
 
     if (targetPlan.length === 0) {
       return NextResponse.json(
@@ -170,57 +147,37 @@ export async function POST(request: NextRequest) {
     }
 
     const finalAmount = validation.data.amount ?? plan.price;
-
-    // Calculate subscription dates
     const now = new Date();
-    const { startDate, endDate } = calculateSubscriptionDates(
-      plan.durationDays,
-      now
-    );
+    const { startDate, endDate } = calculateSubscriptionDates(plan.durationDays, now);
 
-    // Atomic transaction for subscription update/create and payment insert
-    const result = await db.transaction(async (tx) => {
-      // Check if member has an existing subscription
-      const existingSub = await tx
-        .select()
-        .from(subscription)
-        .where(eq(subscription.memberId, memberId))
-        .orderBy(desc(subscription.createdAt))
-        .limit(1);
+    const connection = await db.getConnection();
+    let newPayment, activeSubId;
+    
+    try {
+      await connection.beginTransaction();
 
-      let activeSubId: string;
+      const [existingSub] = await connection.query<RowDataPacket[]>(
+        `SELECT id FROM subscription WHERE member_id = ? ORDER BY created_at DESC LIMIT 1`,
+        [memberId]
+      );
 
       if (existingSub.length > 0) {
         activeSubId = existingSub[0].id;
-        await tx
-          .update(subscription)
-          .set({
-            planId: plan.id,
-            startDate,
-            endDate,
-            status: "active",
-            updatedAt: now,
-          })
-          .where(eq(subscription.id, activeSubId));
+        await connection.query(
+          `UPDATE subscription SET plan_id = ?, start_date = ?, end_date = ?, status = 'active', updated_at = ? WHERE id = ?`,
+          [plan.id, startDate, endDate, now, activeSubId]
+        );
       } else {
         activeSubId = crypto.randomUUID();
-        await tx.insert(subscription).values({
-          id: activeSubId,
-          memberId,
-          planId: plan.id,
-          startDate,
-          endDate,
-          status: "active",
-          createdAt: now,
-          updatedAt: now,
-        });
+        await connection.query(
+          `INSERT INTO subscription (id, member_id, plan_id, start_date, end_date, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 'active', ?, ?)`,
+          [activeSubId, memberId, plan.id, startDate, endDate, now, now]
+        );
       }
 
-      // Generate unique receipt reference REC-YYYYMMDD-XXXX
-      const existingPayments = await tx
-        .select({ receiptRef: payment.receiptRef })
-        .from(payment)
-        .where(isNotNull(payment.receiptRef));
+      const [existingPayments] = await connection.query<RowDataPacket[]>(
+        `SELECT receipt_ref as receiptRef FROM payment WHERE receipt_ref IS NOT NULL`
+      );
 
       const existingRefs = existingPayments
         .map((p) => p.receiptRef)
@@ -228,7 +185,7 @@ export async function POST(request: NextRequest) {
 
       const receiptRef = generateReceiptRef(now, existingRefs);
 
-      const newPayment = {
+      newPayment = {
         id: crypto.randomUUID(),
         memberId,
         subscriptionId: activeSubId,
@@ -241,12 +198,18 @@ export async function POST(request: NextRequest) {
         paidAt: now,
       };
 
-      await tx.insert(payment).values(newPayment);
+      await connection.query(
+        `INSERT INTO payment (id, member_id, subscription_id, amount, payment_method, receipt_ref, notes, created_by_id, status, paid_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [newPayment.id, newPayment.memberId, newPayment.subscriptionId, newPayment.amount, newPayment.paymentMethod, newPayment.receiptRef, newPayment.notes, newPayment.createdById, newPayment.status, newPayment.paidAt]
+      );
 
-      return { newPayment, activeSubId };
-    });
-
-    const { newPayment, activeSubId } = result;
+      await connection.commit();
+    } catch (e) {
+      await connection.rollback();
+      throw e;
+    } finally {
+      connection.release();
+    }
 
     return NextResponse.json(
       {

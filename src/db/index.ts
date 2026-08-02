@@ -1,12 +1,4 @@
-import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import * as authSchema from "./schema/auth";
-import * as domainSchema from "./schema/domain";
-
-export const schema = {
-  ...authSchema,
-  ...domainSchema,
-};
 
 const poolConnection = mysql.createPool({
   host: process.env.DATABASE_HOST || "localhost",
@@ -19,5 +11,5 @@ const poolConnection = mysql.createPool({
   queueLimit: 0,
 });
 
-export const db = drizzle(poolConnection, { schema, mode: "default" });
+export const db = poolConnection;
 export type DB = typeof db;

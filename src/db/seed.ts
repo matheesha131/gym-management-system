@@ -1,8 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { user } from "@/db/schema/auth";
-import { membershipPlan, gymClass, classSchedule } from "@/db/schema/domain";
-import { eq } from "drizzle-orm";
+import { RowDataPacket } from "mysql2";
 
 async function seed() {
   console.log("🌱 Starting database seed for Gym Management System...");
@@ -43,87 +41,48 @@ async function seed() {
       });
 
       if (created?.user?.id) {
-        await db
-          .update(user)
-          .set({
-            role: u.role,
-            memberCode: u.memberCode,
-          })
-          .where(eq(user.id, created.user.id));
+        await db.query(
+          `UPDATE user SET role = ?, member_code = ? WHERE id = ?`,
+          [u.role, u.memberCode, created.user.id]
+        );
       }
     } catch (err: any) {
       console.log(`User ${u.email} might already exist or notice:`, err.message || err);
-      // Ensure role & memberCode updated even if already created
-      await db
-        .update(user)
-        .set({
-          role: u.role,
-          memberCode: u.memberCode,
-        })
-        .where(eq(user.email, u.email));
+      await db.query(
+        `UPDATE user SET role = ?, member_code = ? WHERE email = ?`,
+        [u.role, u.memberCode, u.email]
+      );
     }
   }
 
-  // Seed Membership Plans if empty
-  const existingPlans = await db.select().from(membershipPlan);
+  const [existingPlans] = await db.query<RowDataPacket[]>(`SELECT id FROM membership_plan LIMIT 1`);
   if (existingPlans.length === 0) {
     console.log("Seeding default membership plans...");
-    await db.insert(membershipPlan).values([
-      {
-        id: crypto.randomUUID(),
-        name: "Standard Monthly Pass",
-        description: "Full access to gym equipment and facilities for 30 days.",
-        durationDays: 30,
-        price: "49.99",
-        isActive: true,
-      },
-      {
-        id: crypto.randomUUID(),
-        name: "Annual VIP Membership",
-        description: "Unlimited 365-day access including group classes & personal trainer discounts.",
-        durationDays: 365,
-        price: "499.99",
-        isActive: true,
-      },
-      {
-        id: crypto.randomUUID(),
-        name: "Day Pass",
-        description: "Single-day drop-in access to gym floor.",
-        durationDays: 1,
-        price: "15.00",
-        isActive: true,
-      },
-    ]);
+    await db.query(`
+      INSERT INTO membership_plan (id, name, description, duration_days, price, is_active)
+      VALUES 
+      (?, 'Standard Monthly Pass', 'Full access to gym equipment and facilities for 30 days.', 30, '49.99', true),
+      (?, 'Annual VIP Membership', 'Unlimited 365-day access including group classes & personal trainer discounts.', 365, '499.99', true),
+      (?, 'Day Pass', 'Single-day drop-in access to gym floor.', 1, '15.00', true)
+    `, [crypto.randomUUID(), crypto.randomUUID(), crypto.randomUUID()]);
   }
 
-  // Seed Gym Classes if empty
-  const existingClasses = await db.select().from(gymClass);
+  const [existingClasses] = await db.query<RowDataPacket[]>(`SELECT id FROM gym_class LIMIT 1`);
   if (existingClasses.length === 0) {
     console.log("Seeding default gym classes...");
     const classId1 = crypto.randomUUID();
     const classId2 = crypto.randomUUID();
 
-    const staffUser = await db.select().from(user).where(eq(user.email, "staff@gym.com")).limit(1);
+    const [staffUser] = await db.query<RowDataPacket[]>(`SELECT id FROM user WHERE email = 'staff@gym.com' LIMIT 1`);
     const trainerId = staffUser[0]?.id || null;
 
-    await db.insert(gymClass).values([
-      {
-        id: classId1,
-        name: "HIIT Power Hour",
-        description: "High-intensity interval training designed to burn calories and build stamina.",
-        capacity: 15,
-        trainerId,
-      },
-      {
-        id: classId2,
-        name: "Yoga & Core Alignment",
-        description: "Relaxing posture alignment, flexibility, and core stability exercises.",
-        capacity: 20,
-        trainerId,
-      },
-    ]);
+    await db.query(`
+      INSERT INTO gym_class (id, name, description, capacity, trainer_id)
+      VALUES 
+      (?, 'HIIT Power Hour', 'High-intensity interval training designed to burn calories and build stamina.', 15, ?),
+      (?, 'Yoga & Core Alignment', 'Relaxing posture alignment, flexibility, and core stability exercises.', 20, ?)
+    `, [classId1, trainerId, classId2, trainerId]);
 
-    // Schedule sample session for tomorrow
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(10, 0, 0, 0);
@@ -131,14 +90,10 @@ async function seed() {
     const endTomorrow = new Date(tomorrow);
     endTomorrow.setHours(11, 0, 0, 0);
 
-    await db.insert(classSchedule).values({
-      id: crypto.randomUUID(),
-      classId: classId1,
-      trainerId,
-      startTime: tomorrow,
-      endTime: endTomorrow,
-      currentBookings: 0,
-    });
+    await db.query(`
+      INSERT INTO class_schedule (id, class_id, trainer_id, start_time, end_time, current_bookings)
+      VALUES (?, ?, ?, ?, ?, 0)
+    `, [crypto.randomUUID(), classId1, trainerId, tomorrow, endTomorrow]);
   }
 
   console.log("✅ Database seed completed successfully!");

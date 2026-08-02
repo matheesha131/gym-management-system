@@ -2,7 +2,7 @@
 
 A full-stack web application for fitness facilities, managing member subscriptions, counter payments, real-time entry check-in terminals, and class scheduling & booking.
 
-Built with **Next.js (App Router)**, **React 19**, **Drizzle ORM**, **Better Auth**, and **Tailwind CSS**.
+Built with **Next.js (App Router)**, **React 19**, raw **mysql2**, **Better Auth**, and **Tailwind CSS**.
 
 ---
 
@@ -24,7 +24,7 @@ Built with **Next.js (App Router)**, **React 19**, **Drizzle ORM**, **Better Aut
 ## Tech Stack
 
 - **Framework**: Next.js 16 (App Router) & React 19
-- **Database & ORM**: Drizzle ORM with MySQL (`mysql2`)
+- **Database**: Raw MySQL (`mysql2`)
 - **Authentication & RBAC**: Better Auth & Next.js Proxy Middleware
 - **Styling**: Tailwind CSS 4
 - **Runtime & Testing**: Bun runtime (`bun test`) & TypeScript 5
@@ -53,9 +53,9 @@ BETTER_AUTH_URL="http://localhost:3000"
    bun install
    ```
 
-2. Run database migrations / schema sync:
+2. Run database schema sync:
    ```bash
-   npx drizzle-kit push
+   bun run db:push
    ```
 
 3. Start the local development server:

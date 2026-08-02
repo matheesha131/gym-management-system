@@ -1,10 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { user } from "@/db/schema/auth";
-import { gymClass, classSchedule } from "@/db/schema/domain";
 import { isAuthorizedForClassManagement, validateScheduleInput } from "@/lib/classes";
-import { eq, desc, gte } from "drizzle-orm";
+import { RowDataPacket } from "mysql2";
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,22 +18,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const schedulesList = await db
-      .select({
-        id: classSchedule.id,
-        classId: classSchedule.classId,
-        className: gymClass.name,
-        classCapacity: gymClass.capacity,
-        trainerId: classSchedule.trainerId,
-        trainerName: user.name,
-        startTime: classSchedule.startTime,
-        endTime: classSchedule.endTime,
-        currentBookings: classSchedule.currentBookings,
-      })
-      .from(classSchedule)
-      .innerJoin(gymClass, eq(classSchedule.classId, gymClass.id))
-      .leftJoin(user, eq(classSchedule.trainerId, user.id))
-      .orderBy(desc(classSchedule.startTime));
+    const [schedulesList] = await db.query<RowDataPacket[]>(`
+      SELECT 
+        s.id,
+        s.class_id as classId,
+        c.name as className,
+        c.capacity as classCapacity,
+        s.trainer_id as trainerId,
+        u.name as trainerName,
+        s.start_time as startTime,
+        s.end_time as endTime,
+        s.current_bookings as currentBookings
+      FROM class_schedule s
+      INNER JOIN gym_class c ON s.class_id = c.id
+      LEFT JOIN user u ON s.trainer_id = u.id
+      ORDER BY s.start_time DESC
+    `);
 
     return NextResponse.json(schedulesList);
   } catch (error: any) {
@@ -68,33 +66,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    // Verify gym class exists
-    const existingClass = await db
-      .select()
-      .from(gymClass)
-      .where(eq(gymClass.id, validation.data.classId))
-      .limit(1);
+    const [existingClass] = await db.query<RowDataPacket[]>(
+      `SELECT trainer_id as trainerId FROM gym_class WHERE id = ? LIMIT 1`,
+      [validation.data.classId]
+    );
 
     if (existingClass.length === 0) {
       return NextResponse.json({ error: "Gym class not found" }, { status: 404 });
     }
 
     const newScheduleId = crypto.randomUUID();
+    const trainerId = validation.data.trainerId || existingClass[0].trainerId || null;
 
-    await db.insert(classSchedule).values({
-      id: newScheduleId,
-      classId: validation.data.classId,
-      trainerId: validation.data.trainerId || existingClass[0].trainerId || null,
-      startTime: new Date(validation.data.startTime),
-      endTime: new Date(validation.data.endTime),
-      currentBookings: 0,
-    });
+    await db.query(`
+      INSERT INTO class_schedule (id, class_id, trainer_id, start_time, end_time, current_bookings)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `, [
+      newScheduleId,
+      validation.data.classId,
+      trainerId,
+      new Date(validation.data.startTime),
+      new Date(validation.data.endTime),
+      0
+    ]);
 
     return NextResponse.json(
       {
         id: newScheduleId,
         classId: validation.data.classId,
-        trainerId: validation.data.trainerId,
+        trainerId,
         startTime: validation.data.startTime,
         endTime: validation.data.endTime,
         currentBookings: 0,

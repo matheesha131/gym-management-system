@@ -6,7 +6,7 @@ Gym operators lack an integrated, streamlined system to manage member accounts, 
 
 ## Solution
 
-The Gym Management System is a clean, single-tenant management platform built with Next.js App Router, shadcn/ui, Better Auth, and MariaDB (via Drizzle ORM). It features role-based access control separating Member self-service (`/portal/*`) from Admin/Staff operations (`/admin/*`), manual counter payment logging with automatic receipt and subscription lifecycle management, an instant entry check-in validation terminal, and class scheduling.
+The Gym Management System is a clean, single-tenant management platform built with Next.js App Router, shadcn/ui, Better Auth, and MariaDB (via raw mysql2). It features role-based access control separating Member self-service (`/portal/*`) from Admin/Staff operations (`/admin/*`), manual counter payment logging with automatic receipt and subscription lifecycle management, an instant entry check-in validation terminal, and class scheduling.
 
 ## User Stories
 
@@ -30,8 +30,8 @@ The Gym Management System is a clean, single-tenant management platform built wi
 
 ## Implementation Decisions
 
-- **Framework & ORM**: Next.js App Router (TypeScript) with Drizzle ORM over MariaDB using `mysql2` driver.
-- **Authentication & RBAC**: Better Auth integration using `@better-auth/drizzle-adapter` with user roles (`admin`, `staff`, `member`) enforced via Next.js Middleware router guards.
+- **Framework & Database**: Next.js App Router (TypeScript) with raw SQL queries over MariaDB using `mysql2` driver.
+- **Authentication & RBAC**: Better Auth integration with user roles (`admin`, `staff`, `member`) enforced via Next.js Middleware router guards.
 - **Domain Data Schema**:
   - `user`: Extended with role and `memberCode` fields.
   - `membership_plan`: `id`, `name`, `description`, `price`, `durationDays`, `isActive`.

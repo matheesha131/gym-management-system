@@ -1,9 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { gymClass, classSchedule, classBooking } from "@/db/schema/domain";
 import { canCancelBooking } from "@/lib/classes";
-import { eq, and, sql } from "drizzle-orm";
+import { RowDataPacket } from "mysql2";
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,17 +24,11 @@ export async function POST(request: NextRequest) {
     const bookingId = body.bookingId.trim();
     const now = new Date();
 
-    // Fetch booking
-    const bookings = await db
-      .select({
-        id: classBooking.id,
-        scheduleId: classBooking.scheduleId,
-        memberId: classBooking.memberId,
-        status: classBooking.status,
-      })
-      .from(classBooking)
-      .where(eq(classBooking.id, bookingId))
-      .limit(1);
+    const [bookings] = await db.query<RowDataPacket[]>(`
+      SELECT id, schedule_id as scheduleId, member_id as memberId, status
+      FROM class_booking
+      WHERE id = ? LIMIT 1
+    `, [bookingId]);
 
     if (bookings.length === 0) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
@@ -43,50 +36,49 @@ export async function POST(request: NextRequest) {
 
     const booking = bookings[0];
 
-    // Check authorization: member can only cancel their own booking, staff/admin can cancel any
     const isStaffOrAdmin = session.user.role === "admin" || session.user.role === "staff";
     if (booking.memberId !== userId && !isStaffOrAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Fetch schedule with class capacity
-    const schedules = await db
-      .select({
-        id: classSchedule.id,
-        capacity: gymClass.capacity,
-        currentBookings: classSchedule.currentBookings,
-        startTime: classSchedule.startTime,
-      })
-      .from(classSchedule)
-      .innerJoin(gymClass, eq(classSchedule.classId, gymClass.id))
-      .where(eq(classSchedule.id, booking.scheduleId))
-      .limit(1);
+    const [schedules] = await db.query<RowDataPacket[]>(`
+      SELECT 
+        s.id, c.capacity, s.current_bookings as currentBookings, s.start_time as startTime
+      FROM class_schedule s
+      INNER JOIN gym_class c ON s.class_id = c.id
+      WHERE s.id = ? LIMIT 1
+    `, [booking.scheduleId]);
 
     if (schedules.length === 0) {
       return NextResponse.json({ error: "Class schedule not found" }, { status: 404 });
     }
 
-    const evaluation = canCancelBooking(booking, schedules[0], now);
+    const evaluation = canCancelBooking(booking, schedules[0] as any, now);
     if (!evaluation.canCancel) {
       return NextResponse.json({ error: evaluation.reason }, { status: 400 });
     }
 
-    // Transaction to set status to cancelled and decrement currentBookings
-    await db.transaction(async (tx) => {
-      await tx
-        .update(classBooking)
-        .set({
-          status: "cancelled",
-        })
-        .where(eq(classBooking.id, bookingId));
+    const connection = await db.getConnection();
+    try {
+      await connection.beginTransaction();
 
-      await tx
-        .update(classSchedule)
-        .set({
-          currentBookings: sql`GREATEST(0, ${classSchedule.currentBookings} - 1)`,
-        })
-        .where(eq(classSchedule.id, booking.scheduleId));
-    });
+      await connection.query(
+        `UPDATE class_booking SET status = 'cancelled' WHERE id = ?`,
+        [bookingId]
+      );
+
+      await connection.query(
+        `UPDATE class_schedule SET current_bookings = GREATEST(0, current_bookings - 1) WHERE id = ?`,
+        [booking.scheduleId]
+      );
+
+      await connection.commit();
+    } catch (e) {
+      await connection.rollback();
+      throw e;
+    } finally {
+      connection.release();
+    }
 
     return NextResponse.json({
       id: bookingId,

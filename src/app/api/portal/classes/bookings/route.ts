@@ -1,9 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { gymClass, classSchedule, classBooking } from "@/db/schema/domain";
 import { canBookClass } from "@/lib/classes";
-import { eq, and, sql } from "drizzle-orm";
+import { RowDataPacket } from "mysql2";
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,18 +24,13 @@ export async function POST(request: NextRequest) {
     const scheduleId = body.scheduleId.trim();
     const now = new Date();
 
-    // Fetch schedule and class details
-    const schedules = await db
-      .select({
-        id: classSchedule.id,
-        capacity: gymClass.capacity,
-        currentBookings: classSchedule.currentBookings,
-        startTime: classSchedule.startTime,
-      })
-      .from(classSchedule)
-      .innerJoin(gymClass, eq(classSchedule.classId, gymClass.id))
-      .where(eq(classSchedule.id, scheduleId))
-      .limit(1);
+    const [schedules] = await db.query<RowDataPacket[]>(`
+      SELECT 
+        s.id, c.capacity, s.current_bookings as currentBookings, s.start_time as startTime
+      FROM class_schedule s
+      INNER JOIN gym_class c ON s.class_id = c.id
+      WHERE s.id = ? LIMIT 1
+    `, [scheduleId]);
 
     if (schedules.length === 0) {
       return NextResponse.json({ error: "Class session schedule not found" }, { status: 404 });
@@ -44,59 +38,52 @@ export async function POST(request: NextRequest) {
 
     const schedule = schedules[0];
 
-    // Check existing booking for member
-    const existingBookings = await db
-      .select({
-        id: classBooking.id,
-        status: classBooking.status,
-      })
-      .from(classBooking)
-      .where(
-        and(
-          eq(classBooking.scheduleId, scheduleId),
-          eq(classBooking.memberId, userId)
-        )
-      )
-      .orderBy(sql`${classBooking.createdAt} DESC`)
-      .limit(1);
+    const [existingBookings] = await db.query<RowDataPacket[]>(`
+      SELECT id, status
+      FROM class_booking
+      WHERE schedule_id = ? AND member_id = ?
+      ORDER BY created_at DESC
+      LIMIT 1
+    `, [scheduleId, userId]);
 
     const activeBooking = existingBookings.find(
       (b) => b.status === "confirmed" || b.status === "booked"
     );
 
-    const evaluation = canBookClass(schedule, activeBooking, now);
+    const evaluation = canBookClass(schedule as any, activeBooking as any, now);
 
     if (!evaluation.canBook) {
       return NextResponse.json({ error: evaluation.reason }, { status: 400 });
     }
 
     const newBookingId = crypto.randomUUID();
-
-    // Execute transaction to book slot and increment current bookings count atomically
     let updateSuccess = false;
-    await db.transaction(async (tx) => {
-      const updateResult = await tx
-        .update(classSchedule)
-        .set({
-          currentBookings: sql`${classSchedule.currentBookings} + 1`,
-        })
-        .where(
-          and(
-            eq(classSchedule.id, scheduleId),
-            sql`${classSchedule.currentBookings} < ${schedule.capacity}`
-          )
-        );
 
-      await tx.insert(classBooking).values({
-        id: newBookingId,
-        scheduleId: scheduleId,
-        memberId: userId,
-        status: "confirmed",
-        createdAt: now,
-      });
+    const connection = await db.getConnection();
+    try {
+      await connection.beginTransaction();
 
-      updateSuccess = true;
-    });
+      const [updateResult] = await connection.query<any>(`
+        UPDATE class_schedule 
+        SET current_bookings = current_bookings + 1 
+        WHERE id = ? AND current_bookings < ?
+      `, [scheduleId, schedule.capacity]);
+
+      if (updateResult.affectedRows > 0) {
+        await connection.query(`
+          INSERT INTO class_booking (id, schedule_id, member_id, status, created_at)
+          VALUES (?, ?, ?, 'confirmed', ?)
+        `, [newBookingId, scheduleId, userId, now]);
+        updateSuccess = true;
+      }
+
+      await connection.commit();
+    } catch (e) {
+      await connection.rollback();
+      throw e;
+    } finally {
+      connection.release();
+    }
 
     if (!updateSuccess) {
       return NextResponse.json({ error: "Class session is fully booked" }, { status: 400 });

@@ -1,10 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { user } from "@/db/schema/auth";
-import { gymClass } from "@/db/schema/domain";
 import { isAuthorizedForClassManagement, validateClassInput } from "@/lib/classes";
-import { eq, desc } from "drizzle-orm";
+import { RowDataPacket } from "mysql2";
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,29 +18,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const classesList = await db
-      .select({
-        id: gymClass.id,
-        name: gymClass.name,
-        description: gymClass.description,
-        trainerId: gymClass.trainerId,
-        trainerName: user.name,
-        capacity: gymClass.capacity,
-        createdAt: gymClass.createdAt,
-      })
-      .from(gymClass)
-      .leftJoin(user, eq(gymClass.trainerId, user.id))
-      .orderBy(desc(gymClass.createdAt));
+    const [classesList] = await db.query<RowDataPacket[]>(`
+      SELECT 
+        c.id, 
+        c.name, 
+        c.description, 
+        c.trainer_id as trainerId, 
+        u.name as trainerName, 
+        c.capacity, 
+        c.created_at as createdAt
+      FROM gym_class c
+      LEFT JOIN user u ON c.trainer_id = u.id
+      ORDER BY c.created_at DESC
+    `);
 
-    const trainersList = await db
-      .select({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      })
-      .from(user)
-      .orderBy(user.name);
+    const [trainersList] = await db.query<RowDataPacket[]>(`
+      SELECT id, name, email, role
+      FROM user
+      ORDER BY name
+    `);
 
     return NextResponse.json({
       classes: classesList,
@@ -80,14 +74,17 @@ export async function POST(request: NextRequest) {
 
     const newClassId = crypto.randomUUID();
 
-    await db.insert(gymClass).values({
-      id: newClassId,
-      name: validation.data.name,
-      description: validation.data.description,
-      trainerId: validation.data.trainerId,
-      capacity: validation.data.capacity,
-      createdAt: new Date(),
-    });
+    await db.query(`
+      INSERT INTO gym_class (id, name, description, trainer_id, capacity, created_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `, [
+      newClassId,
+      validation.data.name,
+      validation.data.description,
+      validation.data.trainerId,
+      validation.data.capacity,
+      new Date()
+    ]);
 
     return NextResponse.json(
       {

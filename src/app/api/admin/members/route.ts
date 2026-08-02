@@ -1,15 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { user } from "@/db/schema/auth";
-import { subscription, membershipPlan } from "@/db/schema/domain";
 import {
   validateMemberInput,
   generateMemberCode,
   isAuthorizedForMemberManagement,
   filterMembers,
 } from "@/lib/members";
-import { eq, desc, isNotNull } from "drizzle-orm";
+import { RowDataPacket } from "mysql2";
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,39 +26,26 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const searchQuery = searchParams.get("q") || searchParams.get("search") || "";
 
-    // Fetch members (role = 'member' or memberCode is set)
-    const membersList = await db
-      .select({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        memberCode: user.memberCode,
-        role: user.role,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      })
-      .from(user)
-      .where(eq(user.role, "member"))
-      .orderBy(desc(user.createdAt));
+    const [membersList] = await db.query<RowDataPacket[]>(`
+      SELECT 
+        id, name, email, phone_number as phoneNumber, 
+        member_code as memberCode, role, created_at as createdAt, updated_at as updatedAt
+      FROM user
+      WHERE role = 'member'
+      ORDER BY created_at DESC
+    `);
 
-    // Fetch active subscriptions with plan details for each member
-    const activeSubs = await db
-      .select({
-        id: subscription.id,
-        memberId: subscription.memberId,
-        startDate: subscription.startDate,
-        endDate: subscription.endDate,
-        status: subscription.status,
-        planName: membershipPlan.name,
-      })
-      .from(subscription)
-      .innerJoin(membershipPlan, eq(subscription.planId, membershipPlan.id))
-      .where(eq(subscription.status, "active"));
+    const [activeSubs] = await db.query<RowDataPacket[]>(`
+      SELECT 
+        s.id, s.member_id as memberId, s.start_date as startDate, 
+        s.end_date as endDate, s.status, p.name as planName
+      FROM subscription s
+      INNER JOIN membership_plan p ON s.plan_id = p.id
+      WHERE s.status = 'active'
+    `);
 
-    // Map active subscriptions to member records
     const now = new Date();
-    const subMap = new Map<string, (typeof activeSubs)[0]>();
+    const subMap = new Map<string, any>();
     for (const sub of activeSubs) {
       const isNotExpired = new Date(sub.endDate) > now;
       if (isNotExpired && !subMap.has(sub.memberId)) {
@@ -116,12 +101,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    // Check email uniqueness
-    const existing = await db
-      .select()
-      .from(user)
-      .where(eq(user.email, validation.data.email))
-      .limit(1);
+    const [existing] = await db.query<RowDataPacket[]>(
+      `SELECT id FROM user WHERE email = ? LIMIT 1`,
+      [validation.data.email]
+    );
 
     if (existing.length > 0) {
       return NextResponse.json(
@@ -130,20 +113,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate unique memberCode
-    const existingUsers = await db
-      .select({ memberCode: user.memberCode })
-      .from(user)
-      .where(isNotNull(user.memberCode));
+    const [existingUsers] = await db.query<RowDataPacket[]>(
+      `SELECT member_code as memberCode FROM user WHERE member_code IS NOT NULL`
+    );
 
     const existingCodes = existingUsers
       .map((u) => u.memberCode)
       .filter((c): c is string => Boolean(c));
 
     const memberCode = generateMemberCode(existingCodes);
+    const newMemberId = crypto.randomUUID();
 
     const newMember = {
-      id: crypto.randomUUID(),
+      id: newMemberId,
       name: validation.data.name,
       email: validation.data.email,
       phoneNumber: validation.data.phoneNumber,
@@ -152,7 +134,18 @@ export async function POST(request: NextRequest) {
       emailVerified: false,
     };
 
-    await db.insert(user).values(newMember);
+    await db.query(`
+      INSERT INTO user (id, name, email, phone_number, member_code, role, email_verified)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `, [
+      newMember.id,
+      newMember.name,
+      newMember.email,
+      newMember.phoneNumber || null,
+      newMember.memberCode,
+      newMember.role,
+      newMember.emailVerified
+    ]);
 
     return NextResponse.json(newMember, { status: 201 });
   } catch (error) {

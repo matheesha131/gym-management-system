@@ -1,9 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { membershipPlan } from "@/db/schema/domain";
 import { isAuthorizedForPlanMutation, validatePlanUpdate } from "@/lib/plans";
-import { eq } from "drizzle-orm";
+import { RowDataPacket } from "mysql2";
 
 export async function PATCH(
   request: NextRequest,
@@ -25,10 +24,10 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
 
-    const existing = await db
-      .select()
-      .from(membershipPlan)
-      .where(eq(membershipPlan.id, id));
+    const [existing] = await db.query<RowDataPacket[]>(
+      `SELECT id FROM membership_plan WHERE id = ? LIMIT 1`,
+      [id]
+    );
 
     if (existing.length === 0) {
       return NextResponse.json({ error: "Plan not found" }, { status: 404 });
@@ -39,15 +38,42 @@ export async function PATCH(
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    await db
-      .update(membershipPlan)
-      .set(validation.data)
-      .where(eq(membershipPlan.id, id));
+    const updateFields = [];
+    const updateValues = [];
+    
+    if (validation.data.name !== undefined) {
+      updateFields.push("name = ?");
+      updateValues.push(validation.data.name);
+    }
+    if (validation.data.description !== undefined) {
+      updateFields.push("description = ?");
+      updateValues.push(validation.data.description);
+    }
+    if (validation.data.durationDays !== undefined) {
+      updateFields.push("duration_days = ?");
+      updateValues.push(validation.data.durationDays);
+    }
+    if (validation.data.price !== undefined) {
+      updateFields.push("price = ?");
+      updateValues.push(validation.data.price);
+    }
+    if (validation.data.isActive !== undefined) {
+      updateFields.push("is_active = ?");
+      updateValues.push(validation.data.isActive);
+    }
 
-    const updated = await db
-      .select()
-      .from(membershipPlan)
-      .where(eq(membershipPlan.id, id));
+    if (updateFields.length > 0) {
+      updateValues.push(new Date());
+      updateFields.push("updated_at = ?");
+      
+      updateValues.push(id);
+      await db.query(`UPDATE membership_plan SET ${updateFields.join(", ")} WHERE id = ?`, updateValues);
+    }
+
+    const [updated] = await db.query<RowDataPacket[]>(
+      `SELECT id, name, description, duration_days as durationDays, price, is_active as isActive, created_at as createdAt, updated_at as updatedAt FROM membership_plan WHERE id = ? LIMIT 1`,
+      [id]
+    );
 
     return NextResponse.json(updated[0]);
   } catch (error) {

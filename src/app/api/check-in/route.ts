@@ -1,15 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { user } from "@/db/schema/auth";
-import { subscription, membershipPlan, checkIn } from "@/db/schema/domain";
 import {
   isAuthorizedForCheckIn,
   evaluateEntryEligibility,
   validateCheckInInput,
   validateOverrideInput,
 } from "@/lib/terminal";
-import { eq, or, desc, sql } from "drizzle-orm";
+import { RowDataPacket } from "mysql2";
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,26 +45,21 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: val.error }, { status: 400 });
       }
 
-      const members = await db
-        .select({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          memberCode: user.memberCode,
-        })
-        .from(user)
-        .where(eq(user.id, val.data.memberId))
-        .limit(1);
+      const [members] = await db.query<RowDataPacket[]>(`
+        SELECT id, name, email, member_code as memberCode
+        FROM user
+        WHERE id = ? LIMIT 1
+      `, [val.data.memberId]);
 
       if (members.length === 0) {
         return NextResponse.json({ error: "Member not found" }, { status: 404 });
       }
 
-      targetMember = members[0];
+      targetMember = members[0] as any;
       finalStatus = "granted";
       isOverride = true;
       overrideNotes = val.data.overrideNotes || "Staff manual override";
-      scannedCode = val.data.scannedCode || targetMember.memberCode || targetMember.id;
+      scannedCode = val.data.scannedCode || targetMember!.memberCode || targetMember!.id;
     } else {
       const val = validateCheckInInput(body);
       if (!val.valid || !val.data) {
@@ -75,23 +68,12 @@ export async function POST(request: NextRequest) {
 
       scannedCode = val.data.code;
 
-      // Find member by memberCode, id, or email
-      const members = await db
-        .select({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          memberCode: user.memberCode,
-        })
-        .from(user)
-        .where(
-          or(
-            eq(user.memberCode, scannedCode),
-            eq(user.id, scannedCode),
-            eq(sql`LOWER(${user.email})`, scannedCode.toLowerCase())
-          )
-        )
-        .limit(1);
+      const [members] = await db.query<RowDataPacket[]>(`
+        SELECT id, name, email, member_code as memberCode
+        FROM user
+        WHERE member_code = ? OR id = ? OR LOWER(email) = ?
+        LIMIT 1
+      `, [scannedCode, scannedCode, scannedCode.toLowerCase()]);
 
       if (members.length === 0) {
         return NextResponse.json(
@@ -100,41 +82,33 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      targetMember = members[0];
+      targetMember = members[0] as any;
 
-      // Fetch subscriptions for member
-      const userSubs = await db
-        .select({
-          id: subscription.id,
-          planName: membershipPlan.name,
-          startDate: subscription.startDate,
-          endDate: subscription.endDate,
-          status: subscription.status,
-        })
-        .from(subscription)
-        .innerJoin(membershipPlan, eq(subscription.planId, membershipPlan.id))
-        .where(eq(subscription.memberId, targetMember.id))
-        .orderBy(desc(subscription.createdAt));
+      const [userSubs] = await db.query<RowDataPacket[]>(`
+        SELECT 
+          s.id, p.name as planName, s.start_date as startDate, 
+          s.end_date as endDate, s.status
+        FROM subscription s
+        INNER JOIN membership_plan p ON s.plan_id = p.id
+        WHERE s.member_id = ?
+        ORDER BY s.created_at DESC
+      `, [targetMember!.id]);
 
       const evalResult = evaluateEntryEligibility(userSubs, now);
       finalStatus = evalResult.status;
       matchedSub = evalResult.subscription;
     }
 
-    // If override, fetch subscription info for display card if not fetched yet
     if (isOverride && targetMember) {
-      const userSubs = await db
-        .select({
-          id: subscription.id,
-          planName: membershipPlan.name,
-          startDate: subscription.startDate,
-          endDate: subscription.endDate,
-          status: subscription.status,
-        })
-        .from(subscription)
-        .innerJoin(membershipPlan, eq(subscription.planId, membershipPlan.id))
-        .where(eq(subscription.memberId, targetMember.id))
-        .orderBy(desc(subscription.createdAt));
+      const [userSubs] = await db.query<RowDataPacket[]>(`
+        SELECT 
+          s.id, p.name as planName, s.start_date as startDate, 
+          s.end_date as endDate, s.status
+        FROM subscription s
+        INNER JOIN membership_plan p ON s.plan_id = p.id
+        WHERE s.member_id = ?
+        ORDER BY s.created_at DESC
+      `, [targetMember.id]);
 
       const evalResult = evaluateEntryEligibility(userSubs, now);
       matchedSub = evalResult.subscription;
@@ -142,16 +116,19 @@ export async function POST(request: NextRequest) {
 
     const newCheckInId = crypto.randomUUID();
 
-    await db.insert(checkIn).values({
-      id: newCheckInId,
-      memberId: targetMember.id,
-      scannedCode: scannedCode,
-      status: finalStatus,
-      isOverride: isOverride,
-      overrideNotes: overrideNotes,
-      createdById: session.user.id,
-      checkedInAt: now,
-    });
+    await db.query(`
+      INSERT INTO check_in (id, member_id, scanned_code, status, is_override, override_notes, created_by_id, checked_in_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      newCheckInId,
+      targetMember!.id,
+      scannedCode,
+      finalStatus,
+      isOverride,
+      overrideNotes,
+      session.user.id,
+      now
+    ]);
 
     return NextResponse.json({
       checkIn: {
@@ -197,23 +174,17 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = Math.min(parseInt(searchParams.get("limit") || "20", 10), 100);
 
-    const logs = await db
-      .select({
-        id: checkIn.id,
-        status: checkIn.status,
-        scannedCode: checkIn.scannedCode,
-        isOverride: checkIn.isOverride,
-        overrideNotes: checkIn.overrideNotes,
-        checkedInAt: checkIn.checkedInAt,
-        memberId: checkIn.memberId,
-        memberName: user.name,
-        memberEmail: user.email,
-        memberCode: user.memberCode,
-      })
-      .from(checkIn)
-      .innerJoin(user, eq(checkIn.memberId, user.id))
-      .orderBy(desc(checkIn.checkedInAt))
-      .limit(limit);
+    const [logs] = await db.query<RowDataPacket[]>(`
+      SELECT 
+        c.id, c.status, c.scanned_code as scannedCode, 
+        c.is_override as isOverride, c.override_notes as overrideNotes, 
+        c.checked_in_at as checkedInAt, c.member_id as memberId, 
+        u.name as memberName, u.email as memberEmail, u.member_code as memberCode
+      FROM check_in c
+      INNER JOIN user u ON c.member_id = u.id
+      ORDER BY c.checked_in_at DESC
+      LIMIT ?
+    `, [limit]);
 
     return NextResponse.json(logs);
   } catch (error: any) {

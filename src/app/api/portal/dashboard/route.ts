@@ -1,10 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { user } from "@/db/schema/auth";
-import { subscription, membershipPlan, checkIn } from "@/db/schema/domain";
 import { calculateRemainingDays, determineSubscriptionStatus } from "@/lib/portal";
-import { eq, desc } from "drizzle-orm";
+import { RowDataPacket } from "mysql2";
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,18 +16,11 @@ export async function GET(request: NextRequest) {
 
     const userId = session.user.id;
 
-    // Fetch user details
-    const userData = await db
-      .select({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        memberCode: user.memberCode,
-        role: user.role,
-      })
-      .from(user)
-      .where(eq(user.id, userId))
-      .limit(1);
+    const [userData] = await db.query<RowDataPacket[]>(`
+      SELECT id, name, email, member_code as memberCode, role
+      FROM user
+      WHERE id = ? LIMIT 1
+    `, [userId]);
 
     if (userData.length === 0) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -37,26 +28,20 @@ export async function GET(request: NextRequest) {
 
     const currentUser = userData[0];
 
-    // Fetch subscriptions
-    const userSubscriptions = await db
-      .select({
-        id: subscription.id,
-        planName: membershipPlan.name,
-        startDate: subscription.startDate,
-        endDate: subscription.endDate,
-        status: subscription.status,
-        createdAt: subscription.createdAt,
-      })
-      .from(subscription)
-      .innerJoin(membershipPlan, eq(subscription.planId, membershipPlan.id))
-      .where(eq(subscription.memberId, userId))
-      .orderBy(desc(subscription.createdAt));
+    const [userSubscriptions] = await db.query<RowDataPacket[]>(`
+      SELECT 
+        s.id, p.name as planName, s.start_date as startDate, 
+        s.end_date as endDate, s.status, s.created_at as createdAt
+      FROM subscription s
+      INNER JOIN membership_plan p ON s.plan_id = p.id
+      WHERE s.member_id = ?
+      ORDER BY s.created_at DESC
+    `, [userId]);
 
     const now = new Date();
 
-    // Find active non-expired subscription
     const rawActiveSub = userSubscriptions.find((s) => {
-      const statusInfo = determineSubscriptionStatus(s, now);
+      const statusInfo = determineSubscriptionStatus(s as any, now);
       return statusInfo.isActive;
     });
 
@@ -71,20 +56,15 @@ export async function GET(request: NextRequest) {
         }
       : null;
 
-    // Fetch personal check-ins
-    const userCheckIns = await db
-      .select({
-        id: checkIn.id,
-        status: checkIn.status,
-        checkedInAt: checkIn.checkedInAt,
-        scannedCode: checkIn.scannedCode,
-        isOverride: checkIn.isOverride,
-        overrideNotes: checkIn.overrideNotes,
-      })
-      .from(checkIn)
-      .where(eq(checkIn.memberId, userId))
-      .orderBy(desc(checkIn.checkedInAt))
-      .limit(20);
+    const [userCheckIns] = await db.query<RowDataPacket[]>(`
+      SELECT 
+        id, status, checked_in_at as checkedInAt, scanned_code as scannedCode, 
+        is_override as isOverride, override_notes as overrideNotes
+      FROM check_in
+      WHERE member_id = ?
+      ORDER BY checked_in_at DESC
+      LIMIT 20
+    `, [userId]);
 
     return NextResponse.json({
       user: currentUser,

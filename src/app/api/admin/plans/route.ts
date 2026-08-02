@@ -1,9 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { membershipPlan } from "@/db/schema/domain";
 import { validatePlanInput, isAuthorizedForPlanMutation } from "@/lib/plans";
-import { desc } from "drizzle-orm";
+import { RowDataPacket } from "mysql2";
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,10 +18,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const plans = await db
-      .select()
-      .from(membershipPlan)
-      .orderBy(desc(membershipPlan.createdAt));
+    const [plans] = await db.query<RowDataPacket[]>(`
+      SELECT id, name, description, duration_days as durationDays, price, is_active as isActive, created_at as createdAt, updated_at as updatedAt
+      FROM membership_plan
+      ORDER BY created_at DESC
+    `);
+    
     return NextResponse.json(plans);
   } catch (error) {
     return NextResponse.json(
@@ -62,7 +63,17 @@ export async function POST(request: NextRequest) {
       isActive: validation.data.isActive,
     };
 
-    await db.insert(membershipPlan).values(newPlan);
+    await db.query(`
+      INSERT INTO membership_plan (id, name, description, duration_days, price, is_active)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `, [
+      newPlan.id,
+      newPlan.name,
+      newPlan.description,
+      newPlan.durationDays,
+      newPlan.price,
+      newPlan.isActive
+    ]);
 
     return NextResponse.json(newPlan, { status: 201 });
   } catch (error) {
